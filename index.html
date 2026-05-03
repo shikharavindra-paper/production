@@ -1,0 +1,3499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GSTPL Production & Consumption Dashboard (Excel)</title>
+
+  <style>
+    :root{
+      --bg:#f4f7fc;
+      --text:#1e293b;
+      --muted:#64748b;
+      --border: rgba(0,0,0,0.08);
+      --shadow: 0 8px 24px rgba(0,0,0,0.06);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:18px 14px 40px;}
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+      padding:14px 16px;border:1px solid var(--border);border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.40));
+      box-shadow: var(--shadow);
+    }
+    .title{display:flex;flex-direction:column;gap:6px}
+    .title h1{margin:0;font-size:18px;letter-spacing:0.2px}
+    .title small{color:var(--muted)}
+    .upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .pill{
+      font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);
+      background: rgba(255,255,255,0.65); color: var(--muted);
+    }
+    .pill.ok{color:#0f766e;border-color: rgba(16,185,129,0.35)}
+    input[type=file]{
+      color:var(--muted);
+      padding:8px 10px;border:1px solid var(--border);
+      border-radius: 12px;background: rgba(255,255,255,0.65);
+    }
+    .bar{
+      margin-top:14px;
+      display:flex;gap:10px;flex-wrap:wrap;align-items:end;
+      padding:12px 14px;border:1px solid var(--border);border-radius: var(--radius);
+      background: rgba(255,255,255,0.65);
+      box-shadow: var(--shadow);
+    }
+    label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:13px}
+    input[type=date]{
+      padding:8px 10px;border-radius: 12px;border:1px solid var(--border);
+      background: rgba(255,255,255,0.85); color: var(--text);
+    }
+    button{
+      padding:9px 12px;border-radius: 12px;border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(110,231,255,0.22), rgba(167,139,250,0.10));
+      color: var(--text); cursor:pointer;
+    }
+    button:hover{filter:brightness(1.06)}
+    .rangeInfo{color:var(--muted);font-size:13px;margin-left:auto}
+
+    .kpi-row{
+      margin-top:12px;display:grid;grid-template-columns: repeat(4, 1fr);gap:12px;
+      padding:14px;border-radius: var(--radius);
+    }
+    @media (max-width:1000px){ .kpi-row{grid-template-columns: repeat(2, 1fr);} }
+    @media (max-width:520px){ .kpi-row{grid-template-columns: 1fr;} }
+    .kpi-row.oee-row  { background: rgba(236,72,153,0.08); }
+    .kpi-row.prod-row { background: rgba(59,130,246,0.08); }
+    .kpi-row.loss-row { background: rgba(239,68,68,0.08); }
+    .kpi-row.machine-row { background: rgba(6,182,212,0.08); }
+    .kpi-row.pulp-row { background: rgba(34,197,94,0.08); }
+    .kpi-row.chem-row { background: rgba(245,158,11,0.08); }
+    .kpi-row.util-row { background: rgba(139,92,246,0.08); }
+    .block-title{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin:14px 0 -6px 4px; }
+
+    .kpi{
+      padding:14px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.85);
+      box-shadow: var(--shadow);
+    }
+    .kpi .label{color:#dc2626;font-size:12px;font-weight:700}
+    .kpi .value{font-size:20px;font-weight:700;margin-top:6px}
+    .kpi .sub{color:var(--muted);font-size:12px;margin-top:6px}
+
+    .tabs{margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;}
+    .tab{
+      padding:8px 12px;border-radius: 999px;border:1px solid var(--border);
+      background: rgba(255,255,255,0.65);
+      color: var(--muted); cursor:pointer; user-select:none;
+    }
+    .tab.active{color: var(--text); border-color: rgba(110,231,255,0.45); background: rgba(110,231,255,0.22);}
+    .section{margin-top:14px;display:none}
+    .section.active{display:block}
+    .card{ page-break-inside:avoid; break-inside:avoid; }
+    .kpi-row{ page-break-inside:avoid; break-inside:avoid; }
+
+    .grid{display:grid;grid-template-columns: 1fr 1fr; gap:12px;}
+    @media (max-width:1000px){ .grid{grid-template-columns: 1fr;} }
+
+    .card{
+      padding:12px 12px 10px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background:#ffffff;
+      box-shadow: var(--shadow);
+    }
+    .card h3{margin:0 0 6px;font-size:14px}
+    .card small{color:var(--muted)}
+    .canvasWrap{margin-top:10px}
+    canvas{width:100%;height:320px}
+    .warnBox{
+      margin-top:10px;padding:10px 12px;border-radius: 12px;border:1px dashed rgba(0,0,0,0.18);
+      color: var(--muted); background: rgba(255,255,255,0.65);
+    }
+    table{width:100%;border-collapse: collapse;font-size:13px}
+    th,td{padding:10px;border-bottom:1px solid rgba(0,0,0,0.08);text-align:left}
+    th{color:var(--muted);font-weight:600}
+
+    .compare-controls{
+      display:flex;gap:10px;align-items:end;flex-wrap:wrap;
+      padding:12px 14px;margin-bottom:14px;
+      border:1px solid var(--border);border-radius:var(--radius);
+      background:rgba(255,255,255,0.65);box-shadow:var(--shadow);
+    }
+    .compare-controls label{display:flex;flex-direction:column;gap:4px;color:var(--muted);font-size:12px;font-weight:700}
+    .compare-controls select{
+      padding:7px 10px;border-radius:10px;border:1px solid var(--border);
+      background:rgba(255,255,255,0.85);color:var(--text);font-weight:600;
+    }
+    .compare-checks{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .compare-checks label{flex-direction:row;gap:5px;font-size:12px;font-weight:600;cursor:pointer}
+    .compare-checks input[type=checkbox]{accent-color:#6366f1;width:15px;height:15px}
+    .compare-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+    .compare-table th{
+      padding:10px 8px;border-bottom:2px solid rgba(0,0,0,0.15);
+      text-align:left;font-weight:800;color:var(--muted);font-size:12px;
+      text-transform:uppercase;letter-spacing:0.5px;
+    }
+    .compare-table td{padding:8px;border-bottom:1px solid rgba(0,0,0,0.08);font-weight:600}
+    .compare-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+    .compare-table .pct-up{color:#16a34a;font-weight:700}
+    .compare-table .pct-down{color:#ef4444;font-weight:700}
+    .compare-table .pct-neutral{color:var(--muted);font-weight:600}
+    .compare-table tr.section-row td{
+      font-weight:800;color:#1e293b;background:rgba(99,102,241,0.06);
+      border-bottom:2px solid rgba(99,102,241,0.2);padding-top:12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <h1>GSTPL Production & Consumption Dashboard</h1>
+        <small>Upload Excel once → production, downtime, quality/GSM, efficiency, pulp & chemical consumption</small>
+      </div>
+      <div class="upload">
+        <span id="tagXlsx" class="pill">not loaded</span>
+        <input type="file" id="fileXlsx" accept=".xlsx,.xls" />
+        <button id="btnClearCache" style="font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid #ef4444;background:#fef2f2;color:#ef4444;cursor:pointer;display:none" title="Clear saved data from browser">Clear Saved Data</button>
+      </div>
+    </header>
+
+    <div class="bar">
+      <label>From <input type="date" id="dateFrom"></label>
+      <label>To <input type="date" id="dateTo"></label>
+      <button id="btnPdf" style="background:linear-gradient(180deg,rgba(239,68,68,0.18),rgba(239,68,68,0.06));color:#dc2626;font-weight:700">PDF Report</button>
+      <button id="btnSummary" style="background:linear-gradient(180deg,rgba(34,197,94,0.18),rgba(34,197,94,0.06));color:#16a34a;font-weight:700">A4 Summary</button>
+      <span id="rangeInfo" class="rangeInfo">Upload Excel to start</span>
+    </div>
+
+    <!-- BLOCK 1: MACHINE PERFORMANCE -->
+    <div class="block-title" style="color:#ec4899">BLOCK 1: Machine Performance</div>
+    <div class="kpi-row oee-row">
+      <div class="kpi"><div class="label">OEE %</div><div class="value" id="kpiOEE">—</div><div class="sub" id="kpiOEESub">Availability × Performance</div></div>
+      <div class="kpi"><div class="label">Availability %</div><div class="value" id="kpiAvail">—</div><div class="sub" id="kpiAvailSub">Run time / Planned time</div></div>
+      <div class="kpi"><div class="label">Performance %</div><div class="value" id="kpiPerf">—</div><div class="sub" id="kpiPerfSub">Actual speed / Rated speed</div></div>
+      <div class="kpi"><div class="label">Quality %</div><div class="value" id="kpiQuality">—</div><div class="sub" id="kpiQualitySub">Rejection assumed nil</div></div>
+    </div>
+
+    <!-- BLOCK 2: PRODUCTION -->
+    <div class="block-title" style="color:#3b82f6">BLOCK 2: Production</div>
+    <div class="kpi-row prod-row">
+      <div class="kpi"><div class="label">Total Production</div><div class="value" id="kpiProd">—</div><div class="sub" id="kpiProdSub">—</div><div class="sub" id="kpiBestDay" style="color:#16a34a;font-weight:700;margin-top:4px">—</div><div class="sub" id="kpiWorstDay" style="color:#ef4444;font-weight:700;margin-top:2px">—</div></div>
+      <div class="kpi"><div class="label">Avg Production</div><div class="value" id="kpiAvgProd">—</div><div class="sub">MT/day</div><div class="sub" id="kpiProjProd" style="color:#3b82f6;font-weight:700;margin-top:4px">—</div><div class="sub" id="kpiExpProd" style="color:#16a34a;font-weight:700;margin-top:2px">—</div></div>
+      <div class="kpi"><div class="label">Production / Hour</div><div class="value" id="kpiProdHr">—</div><div class="sub">MT/hr (run time)</div></div>
+      <div class="kpi"><div class="label">Capacity Efficiency</div><div class="value" id="kpiCapEff">—</div><div class="sub" id="kpiCapEffSub">Actual / Capacity</div></div>
+    </div>
+
+    <!-- BLOCK 3: MACHINE -->
+    <div class="block-title" style="color:#06b6d4">BLOCK 3: Machine</div>
+    <div class="kpi-row machine-row">
+      <div class="kpi"><div class="label">Avg Machine Speed</div><div class="value" id="kpiSpeed">—</div><div class="sub">m/min</div><div class="sub" id="kpiSpeedSub" style="color:#06b6d4;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Machine Health Index</div><div class="value" id="kpiHealth">—</div><div class="sub" id="kpiHealthSub">Speed 30% + Avail 30% + OEE 40%</div></div>
+      <div class="kpi"><div class="label">Machine Utilization</div><div class="value" id="kpiUtil">—</div><div class="sub" id="kpiUtilSub">Run hrs / Total hrs</div></div>
+      <div class="kpi"><div class="label">Average GSM</div><div class="value" id="kpiDailyAvg">—</div><div class="sub" id="kpiDailyAvgSub">from date sheets</div></div>
+    </div>
+
+    <!-- BLOCK 4: LOSS ANALYSIS -->
+    <div class="block-title" style="color:#ef4444">BLOCK 4: Loss Analysis</div>
+    <div class="kpi-row loss-row">
+      <div class="kpi"><div class="label">Total Downtime</div><div class="value" id="kpiDown">—</div><div class="sub" id="kpiDownSub">—</div><div class="sub" id="kpiDownDay" style="color:#ef4444;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Downtime Loss</div><div class="value" id="kpiDownLoss">—</div><div class="sub">MT lost to downtime</div></div>
+      <div class="kpi"><div class="label">Speed Loss</div><div class="value" id="kpiSpeedLoss">—</div><div class="sub">MT lost to slow speed</div></div>
+      <div class="kpi"><div class="label">Total Loss</div><div class="value" id="kpiTotalLoss">—</div><div class="sub" id="kpiLossPct" style="color:#ef4444;font-weight:700;margin-top:4px">—</div></div>
+    </div>
+
+    <!-- BLOCK 5: CONSUMPTION — Pulp -->
+    <div class="block-title" style="color:#16a34a">BLOCK 5: Consumption — Pulp</div>
+    <div class="kpi-row pulp-row">
+      <div class="kpi"><div class="label">Total Pulp</div><div class="value" id="kpiPulp">—</div><div class="sub">MT</div><div class="sub" id="kpiPulpPerMt" style="color:#16a34a;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Hardwood Pulp</div><div class="value" id="kpiHw">—</div><div class="sub">MT</div></div>
+      <div class="kpi"><div class="label">Softwood Pulp</div><div class="value" id="kpiSw">—</div><div class="sub">MT</div></div>
+      <div class="kpi"><div class="label">SW % per MT Prod</div><div class="value" id="kpiSwPct">—</div><div class="sub" id="kpiSwPctSub">SW MT / Prod MT × 100</div></div>
+    </div>
+
+    <!-- BLOCK 6: CONSUMPTION — Chemical -->
+    <div class="block-title" style="color:#f59e0b">BLOCK 6: Consumption — Chemical</div>
+    <div class="kpi-row chem-row">
+      <div class="kpi"><div class="label">Total Chemical</div><div class="value" id="kpiChem">—</div><div class="sub">Kg</div></div>
+      <div class="kpi"><div class="label">Chemical per MT</div><div class="value" id="kpiChemPerMt">—</div><div class="sub">Kg chem / MT prod</div></div>
+      <div class="kpi"><div class="label">Pulp per MT Prod</div><div class="value" id="kpiPulpPerMtVal">—</div><div class="sub">MT pulp / MT prod</div></div>
+      <div class="kpi"><div class="label">SEC — Power</div><div class="value" id="kpiSEC">—</div><div class="sub" id="kpiSECSub">Units / MT prod</div></div>
+    </div>
+
+    <!-- BLOCK 7: UTILITY -->
+    <div class="block-title" style="color:#8b5cf6">BLOCK 7: Utility</div>
+    <div class="kpi-row util-row">
+      <div class="kpi"><div class="label">Total Steam</div><div class="value" id="kpiSteam">—</div><div class="sub">MT</div><div class="sub" id="kpiSteamPerMt" style="color:#8b5cf6;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Total Gas</div><div class="value" id="kpiGas">—</div><div class="sub">SCM</div><div class="sub" id="kpiGasTM" style="color:#3b82f6;font-weight:700;margin-top:4px">—</div><div class="sub" id="kpiGasBoiler" style="color:#ef4444;font-weight:700;margin-top:2px">—</div><div class="sub" id="kpiGasPerMt" style="color:#8b5cf6;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Total Water</div><div class="value" id="kpiWater">—</div><div class="sub">m³ (Fresh + RO)</div><div class="sub" id="kpiWaterPerMt" style="color:#8b5cf6;font-weight:700;margin-top:4px">—</div></div>
+      <div class="kpi"><div class="label">Total Power</div><div class="value" id="kpiPower">—</div><div class="sub">Units</div><div class="sub" id="kpiPowerTM" style="color:#3b82f6;font-weight:700;margin-top:4px">—</div><div class="sub" id="kpiPowerBoiler" style="color:#ef4444;font-weight:700;margin-top:2px">—</div><div class="sub" id="kpiPowerPerMt" style="color:#8b5cf6;font-weight:700;margin-top:4px">—</div></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="prod">Production</div>
+      <div class="tab" data-tab="quality">Quality / GSM</div>
+      <div class="tab" data-tab="down">Downtime</div>
+      <div class="tab" data-tab="eff">Machine & Trends</div>
+      <div class="tab" data-tab="cons">Consumption</div>
+      <div class="tab" data-tab="compare">Comparison</div>
+      <div class="tab" data-tab="bench">Benchmarks</div>
+    </div>
+
+    <div class="section active" id="sec-prod">
+      <div class="card">
+        <h3>Daily Production Trend</h3>
+        <small>Machine Prod (bar) + Finished Prod (line, right axis)</small>
+        <div class="canvasWrap"><canvas id="chartProd"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-quality">
+      <div class="grid">
+        <div class="card">
+          <h3>Quality-wise Production</h3>
+          <small>Pie (MT) — date filtered (labels inside)</small>
+          <div class="canvasWrap"><canvas id="chartQualityPie"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>GSM-wise Production</h3>
+          <small>Pie (MT) — date filtered (labels inside)</small>
+          <div class="canvasWrap"><canvas id="chartGsmPie"></canvas></div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Quality-wise Trend (Stacked Column)</h3>
+          <small>Each day = one column, qualities stacked (Excel-like)</small>
+          <div class="canvasWrap"><canvas id="chartQualityTrend"></canvas></div>
+        </div>
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>GSM-wise Trend (Stacked Column)</h3>
+          <small>Each day = one column, GSM stacked</small>
+          <div class="canvasWrap"><canvas id="chartGsmTrend"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-down">
+      <div class="grid">
+        <div class="card">
+          <h3>Downtime Departments</h3>
+          <small>Total minutes by department (ALL)</small>
+          <div class="canvasWrap"><canvas id="chartDown"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Preview (first 12 rows)</h3>
+          <small>Verify dept + time parsing</small>
+          <div id="tableWrap" class="canvasWrap"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-eff">
+      <div class="card">
+        <h3>Downtime Trend</h3>
+        <small>Minutes per day</small>
+        <div class="canvasWrap"><canvas id="chartDownTrend"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Machine Speed Trend</h3>
+        <small>Avg speed (m/min) per day vs Rated speed (1380)</small>
+        <div class="canvasWrap"><canvas id="chartSpeedTrend"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Furnish Mix — Softwood % Trend</h3>
+        <small>Daily SW consumption as % of production MT</small>
+        <div class="canvasWrap"><canvas id="chartSwTrend"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Specific Energy Consumption (SEC) Trend</h3>
+        <small>Steam (MT/MT), Power (Units/MT), Gas (SCM/MT) per day</small>
+        <div class="canvasWrap"><canvas id="chartSecTrend"></canvas></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3>Loss Analysis Tree</h3>
+        <small>Production capacity vs actual — where losses occur</small>
+        <div class="canvasWrap"><canvas id="chartLossTree"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-cons">
+      <div class="grid">
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Pulp Grade-wise Consumption</h3>
+          <small>MT by item — <span style="color:#3b82f6;font-weight:700">Softwood</span> / <span style="color:#22c55e;font-weight:700">Hardwood</span> (selected dates)</small>
+          <div class="canvasWrap"><canvas id="chartPulpGrade"></canvas></div>
+          <div id="pulpGradeWarn" class="warnBox" style="display:none;"></div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Chemical Name-wise Consumption</h3>
+          <small>Kg by chemical (selected dates) — totals match Excel "Todate consumption"</small>
+          <div class="canvasWrap"><canvas id="chartChemGrade"></canvas></div>
+          <div id="chemGradeWarn" class="warnBox" style="display:none;"></div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Per Ton Chemical Consumption (Kg/MT)</h3>
+          <small>Each chemical's Kg ÷ Production MT (selected dates)</small>
+          <div class="canvasWrap"><canvas id="chartChemPerTon"></canvas></div>
+          <div id="chemPerTonTable" class="canvasWrap" style="margin-top:10px;"></div>
+          <div id="chemPerTonWarn" class="warnBox" style="display:none;"></div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Packing Material-wise Consumption</h3>
+          <small>Kg / NOS by item (selected dates) — totals match Excel "Todate consumption"</small>
+          <div class="canvasWrap"><canvas id="chartPackGrade"></canvas></div>
+          <div id="packGradeWarn" class="warnBox" style="display:none;"></div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Utility Consumption</h3>
+          <small>Daily utility usage (selected dates)</small>
+          <div id="utilityTable" class="canvasWrap"></div>
+        </div>
+
+        <div class="card" style="grid-column: 1 / -1;">
+          <h3>Top Consumption Items (Selected Dates)</h3>
+          <small>Pulp + Chemical (Top 12)</small>
+          <div id="consTable" class="canvasWrap"></div>
+        </div>
+      </div>
+    </div>
+    <div class="section" id="sec-compare">
+      <div class="compare-controls">
+        <label>Base Month
+          <select id="cmpBaseMonth"></select>
+        </label>
+        <div>
+          <label style="margin-bottom:4px">Compare With</label>
+          <div class="compare-checks" id="cmpCheckboxes"></div>
+        </div>
+        <button id="btnCompare" style="background:linear-gradient(180deg,rgba(99,102,241,0.22),rgba(99,102,241,0.08));color:#4f46e5;font-weight:700">Apply Comparison</button>
+        <button id="btnCmpPrint" style="background:linear-gradient(180deg,rgba(34,197,94,0.18),rgba(34,197,94,0.06));color:#16a34a;font-weight:700">Print Report</button>
+        <label style="margin-left:auto;cursor:pointer;padding:7px 14px;border-radius:10px;background:linear-gradient(180deg,rgba(16,185,129,0.22),rgba(16,185,129,0.08));color:#059669;font-weight:700;font-size:12px;border:1px solid rgba(16,185,129,0.35);display:flex;align-items:center;gap:6px">
+          &#x2B06; Load Comparison Month(s)
+          <input type="file" id="cmpFileInput" accept=".xlsx,.xls" multiple style="display:none">
+        </label>
+        <span id="cmpStatus" style="color:var(--muted);font-size:12px"></span>
+      </div>
+
+      <div class="card">
+        <h3>Month-over-Month Comparison</h3>
+        <small>KPI summary comparing selected months</small>
+        <div id="cmpTableWrap" class="canvasWrap" style="margin-top:10px"></div>
+      </div>
+
+    </div>
+
+    <div class="section" id="sec-bench">
+      <div class="card">
+        <h3>Quality-wise Consumption Benchmarks (Single-Quality Days Only)</h3>
+        <small style="color:#64748b">Only full-day single-quality production runs are included. Mixed-quality days are excluded.</small>
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <span style="font-weight:600;font-size:13px">Select Months:</span>
+          <div class="compare-checks" id="benchMonthChecks" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          <button id="btnBenchPrint" style="margin-left:auto;background:linear-gradient(180deg,rgba(34,197,94,0.18),rgba(34,197,94,0.06));color:#16a34a;font-weight:700;padding:7px 16px;border-radius:10px;border:1px solid rgba(34,197,94,0.35);cursor:pointer;font-size:12px">Print Benchmark Report</button>
+        </div>
+        <div id="benchTableWrap" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    Chart.register(ChartDataLabels);
+
+    // Tabs
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        document.querySelectorAll(".section").forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        document.getElementById("sec-" + t.dataset.tab).classList.add("active");
+      });
+    });
+
+    const $ = (id) => document.getElementById(id);
+
+    function setTag(ok){
+      $("tagXlsx").textContent = ok ? "loaded" : "not loaded";
+      $("tagXlsx").classList.toggle("ok", ok);
+    }
+
+    function isDailySheet(name){ return /^\d{1,2}[-./]\d{1,2}[-./]\d{2,4}\s*$/.test(name.trim()); }
+    function safeNum(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+    function normalizeQuality(q){
+      let s=q.toUpperCase().replace(/[()]/g,"").replace(/\s+/g," ").trim();
+      const map={"ULTRA LUX FT":"ULTRALUX FT","ULTRALUXFT":"ULTRALUX FT","ULTRA LUXFT":"ULTRALUX FT","ULTRLUX FT":"ULTRALUX FT",
+        "ULTRA LUX TT":"ULTRALUX TT","ULTRALUXTT":"ULTRALUX TT","ULTRA LUXTT":"ULTRALUX TT","ULTRLUX TT":"ULTRALUX TT",
+        "CMAX":"C-MAX","C MAX":"C-MAX","C.MAX":"C-MAX","ULTRASOFT":"ULTRALUX FT",
+        "UTTRA SOFT FT":"ULTRALUX FT","ULTRASOFT FT":"ULTRALUX FT","ULTRA SOFT FT":"ULTRALUX FT",
+        "ULTRALUXNT":"ULTRALUX NT","NAPKIN":"NT"};
+      return map[s]||s;
+    }
+    function normalizeDept(d){
+      let s=d.trim();
+      const lo=s.toLowerCase();
+      if(lo==="instt"||lo==="instt."||lo==="instruments"||lo==="inst"||lo==="inst.") return "Instrument";
+      if(lo==="elect."||lo==="elect"||lo==="elec"||lo==="elec.") return "Electrical";
+      if(lo==="other"||lo==="others") return "Others";
+      if(lo==="mech."||lo==="mech"||lo==="mechanical") return "Maintainance";
+      if(lo==="maintt"||lo==="maintt."||lo==="maint"||lo==="maint."||lo==="maintenance"||lo==="maintanance") return "Maintainance";
+      if(lo==="grade change"||lo==="grade changes") return "Grade change";
+      if(lo==="washup"||lo==="system wash up"||lo==="systm wash up"||lo==="system washup") return "System Washup";
+      if(lo==="plaaned shut"||lo==="plaaned shut down") return "Planed shut";
+      return s;
+    }
+
+    function inRange(dateStr, fromStr, toStr){
+      if (!dateStr) return false;
+      if (fromStr && dateStr < fromStr) return false;
+      if (toStr && dateStr > toStr) return false;
+      return true;
+    }
+
+    function timeToMinutes(v){
+      if (v == null || v === "") return 0;
+      if (v instanceof Date) return v.getHours()*60 + v.getMinutes();
+      if (typeof v === "number") return Math.round(v * 24 * 60);
+      if (typeof v === "string"){
+        const s = v.trim();
+        const m = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (m) return parseInt(m[1],10)*60 + parseInt(m[2],10);
+      }
+      return 0;
+    }
+
+    function movingAverage(arr, window=3){
+      const out=[];
+      for(let i=0;i<arr.length;i++){
+        const start=Math.max(0,i-window+1);
+        const slice=arr.slice(start,i+1);
+        out.push(slice.length ? slice.reduce((a,b)=>a+b,0)/slice.length : 0);
+      }
+      return out;
+    }
+
+    // ====== Chart style helpers (BOLD axis + legend) ======
+    function boldAxisAndLegend(){
+      return {
+        responsive:true,
+        plugins:{
+          legend:{
+            position:"top",
+            labels:{
+              font:{ size:13, weight:"bold" },
+              color:"#111827"
+            }
+          }
+        },
+        scales:{
+          x:{
+            ticks:{ font:{ weight:"bold" }, color:"#111827" },
+            title:{ display:false, font:{ weight:"bold" }, color:"#111827" },
+            grid:{ color:"rgba(0,0,0,0.08)" }
+          },
+          y:{
+            ticks:{ font:{ weight:"bold" }, color:"#111827" },
+            title:{ display:false, font:{ weight:"bold" }, color:"#111827" },
+            grid:{ color:"rgba(0,0,0,0.08)" }
+          }
+        }
+      };
+    }
+
+    // ====== Quality colors ======
+    function qualityColor(q){
+      const key = String(q||"").trim().toUpperCase();
+      const colors = {
+        "NT": "#ff4d9a",
+        "FT": "#3b82f6",
+        "TT": "#f59e0b",
+        "KT": "#22c55e",
+        "TOWEL": "#a3a3a3",
+        "CMAX": "#10b981",
+        "ULTRALUX FT": "#8b5cf6",
+        "ULTRALUX TT": "#ef4444"
+      };
+      return colors[key] || "#94a3b8";
+    }
+
+    const GSM_PALETTE = [
+      "#3b82f6","#22c55e","#f59e0b","#ef4444","#8b5cf6",
+      "#ec4899","#14b8a6","#f97316","#6366f1","#84cc16",
+      "#06b6d4","#e11d48","#a3a3a3","#d946ef","#0ea5e9"
+    ];
+    function gsmColor(gsm, idx){ return GSM_PALETTE[idx % GSM_PALETTE.length]; }
+
+    // ====== HARDWOOD vs SOFTWOOD classifier (your requirement) ======
+    function pulpTypeFromName(name){
+      const s = String(name || "").trim().toLowerCase();
+
+      // strongest rules (exactly what you asked)
+      if (s.includes("imported hardwood")) return "hard";
+      if (s.includes("imported softwood")) return "soft";
+
+      // If it doesn't look like pulp, ignore for split
+      if (!s.includes("pulp")) return "unknown";
+
+      // extra fallback keywords (helps if someone writes without "imported hardwood/softwood")
+      const softKw = ["softwood","sw","pine","spruce","fir","metsa","stora","sodra","komi","alabama","mercer","pacifico","laja","nbsk"];
+      const hardKw = ["hardwood","hw","acacia","euca","eucalyptus","birch","suzano","bracell","cmpc","baycel","april","santa"];
+
+      if (softKw.some(k => s.includes(k))) return "soft";
+      if (hardKw.some(k => s.includes(k))) return "hard";
+
+      return "unknown";
+    }
+
+    // ====== Find the production table header in daily sheets ======
+    function findTableHeader(rows){
+      const norm = (x) => String(x ?? "").trim().toLowerCase();
+      for(let r=0;r<Math.min(rows.length,80);r++){
+        const joined = (rows[r]||[]).map(norm).join(" ");
+        if(joined.includes("s.n") && joined.includes("quality") && joined.includes("gsm")) return r;
+      }
+      return -1;
+    }
+
+    function buildColumnMap(rows, headerRow){
+      const norm = (x) => String(x ?? "").trim().toLowerCase();
+      const h0=(rows[headerRow]||[]).map(norm);
+      const h1=(rows[headerRow+1]||[]).map(norm);
+      const h2=(rows[headerRow+2]||[]).map(norm);
+      const maxLen=Math.max(h0.length,h1.length,h2.length);
+      const colText=[];
+      for(let c=0;c<maxLen;c++){
+        colText.push([h0[c],h1[c],h2[c]].filter(Boolean).join(" ").replace(/\s+/g," ").trim());
+      }
+      const findCol=(patterns)=>{
+        for(let c=0;c<colText.length;c++){
+          if(patterns.every(p=>colText[c].includes(p))) return c;
+        }
+        return -1;
+      };
+      const map={
+        sn: findCol(["s.n"]),
+        quality: findCol(["quality"]),
+        gsm: findCol(["gsm"]),
+        prod: findCol(["prod"]),
+        dept: findCol(["dept"]),
+        time: findCol(["time","loss"]),
+        remarks: findCol(["remarks"])
+      };
+      // fallbacks (your file layout)
+      if(map.sn===-1) map.sn=0;
+      if(map.quality===-1) map.quality=1;
+      if(map.gsm===-1) map.gsm=2;
+      if(map.prod===-1) map.prod=5;
+      if(map.dept===-1) map.dept=8;
+      if(map.time===-1) map.time=9;
+      if(map.remarks===-1) map.remarks=10;
+      return map;
+    }
+
+    // ====== Parse "Pulp & Chemical consumption" sheet (FIXED) ======
+    function parsePulpChemicalConsumptionSheet(wb, fallbackYear, fallbackMonth){
+      const norm = (x) => String(x ?? "").trim().toLowerCase();
+
+      const name =
+        wb.SheetNames.find(n => norm(n) === "pulp & chemical consumption") ||
+        wb.SheetNames.find(n => norm(n) === "pulp and chemical consumption") ||
+        wb.SheetNames.find(n => norm(n).includes("pulp") && norm(n).includes("chemical"));
+
+      if(!name) return { ok:false, reason:"Sheet not found", pulpDaily:[], chemDaily:[], itemDaily:[], hwDaily:[], swDaily:[] };
+
+      const sheet = wb.Sheets[name];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: "" });
+
+      // 1) Detect month/year from top heading like "January-2026"
+      const monthMap = {
+        january:1,february:2,march:3,april:4,may:5,june:6,
+        july:7,august:8,september:9,october:10,november:11,december:12
+      };
+
+      let year = fallbackYear || 2026;
+      let month = fallbackMonth || 1;
+
+      const topText = rows.slice(0, 15).flat().map(x=>String(x||"")).join(" ");
+      const m1 = topText.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b[^0-9]{0,6}\b(20\d{2})\b/i);
+      if(m1){
+        month = monthMap[m1[1].toLowerCase()] || month;
+        year = Number(m1[2]) || year;
+      }
+
+      // 2) Find the header row containing "Particulars" + "Date"
+      let hr = -1;
+      for(let r=0;r<Math.min(rows.length,120);r++){
+        const line = (rows[r]||[]).map(norm).join(" ");
+        if(line.includes("particulars") && line.includes("date")) { hr = r; break; }
+      }
+      if(hr === -1) return { ok:false, reason:"Header row (Particulars + Date) not found", pulpDaily:[], chemDaily:[], itemDaily:[], hwDaily:[], swDaily:[] };
+
+      // 3) Find the row (near header) that actually contains day numbers 1..n
+      function bestDayBlockInRow(rowArr){
+        let best = null;
+        for(let c=0;c<rowArr.length;c++){
+          const startVal = Number(rowArr[c]);
+          if(startVal !== 1) continue;
+
+          let len = 1, expected = 2;
+          while(c+len < rowArr.length){
+            const n = Number(rowArr[c+len]);
+            if(n !== expected) break;
+            len++; expected++;
+            if(expected > 31) break;
+          }
+          if(!best || len > best.len) best = { start:c, end:c+len-1, len };
+        }
+        return best;
+      }
+
+      let dayRow = -1;
+      let dayBlock = null;
+      for(let r=hr; r<=Math.min(hr+6, rows.length-1); r++){
+        const blk = bestDayBlockInRow(rows[r] || []);
+        if(blk && (!dayBlock || blk.len > dayBlock.len)){
+          dayBlock = blk;
+          dayRow = r;
+        }
+      }
+
+      if(!dayBlock || dayBlock.len < 10){
+        return { ok:false, reason:"Day columns (1..n) not detected near header", pulpDaily:[], chemDaily:[], itemDaily:[], hwDaily:[], swDaily:[] };
+      }
+
+      const dayStart = dayBlock.start;
+      const dayEnd   = dayBlock.end;
+      const dayHeader = rows[dayRow];
+
+      // 4) Detect key columns (Particulars / Unit / Type) from header row hr
+      const header = rows[hr] || [];
+      const findColByWord = (word) => {
+        const w = word.toLowerCase();
+        for(let i=0;i<header.length;i++){
+          if(norm(header[i]).includes(w)) return i;
+        }
+        return -1;
+      };
+
+      const colParticulars = findColByWord("particulars"); // usually 1
+      let colUnit = findColByWord("unit");                   // usually 3
+      // If "unit" not in the header row, look for it in sub-header rows
+      if(colUnit === -1){
+        for(let r2=hr+1; r2<=Math.min(hr+5, rows.length-1); r2++){
+          for(let c=0; c<Math.min(10, (rows[r2]||[]).length); c++){
+            if(norm(rows[r2][c]) === "unit"){ colUnit = c; break; }
+          }
+          if(colUnit !== -1) break;
+        }
+      }
+      // Last resort: the "Date" column in the header often holds units in data rows
+      if(colUnit === -1) colUnit = findColByWord("date");
+      let colType = findColByWord("type");                 // sometimes 2
+
+      // fallback if "type" word not present (but HT/ST exists)
+      if(colType === -1){
+        for(let c=0;c<Math.min(6, header.length);c++){
+          const sample = String(rows[dayRow+1]?.[c] ?? "").toUpperCase().trim();
+          if(sample === "HT" || sample === "ST") { colType = c; break; }
+        }
+      }
+
+      const pulpDailyMap = new Map();
+      const chemDailyMap = new Map();
+      const hwDailyMap   = new Map();
+      const swDailyMap   = new Map();
+      const machProdMap  = new Map();   // C: MACHINE PRODUCTION
+      const finProdMap   = new Map();   // D: FINISHED PRODUCTION TO WARE HOUSE
+
+      const itemDaily = [];
+      let section = "pulp";
+
+      // helper fallback name classifier
+      function typeFromNameHTST(name){
+        const s = String(name||"").toLowerCase();
+        if(s.includes("imported hardwood")) return "HT";
+        if(s.includes("imported softwood")) return "ST";
+        return "";
+      }
+
+      for(let r=dayRow+1; r<rows.length; r++){
+        const row = rows[r] || [];
+
+        const particulars = String(row[colParticulars] ?? "").trim();
+        if(!particulars) continue;
+
+        const pLow = particulars.toLowerCase();
+        if(pLow.includes("chemical")) { section = "chemical"; continue; }
+        if(pLow.includes("packing material")) { section = "packing"; continue; }
+        if(pLow.includes("utility")) { section = "utility"; continue; }
+        if(pLow.includes("total")) continue;
+
+        // C: MACHINE PRODUCTION / D: FINISHED PRODUCTION — single data rows (not section headers)
+        const isMachProd = pLow.includes("machine production");
+        const isFinProd  = pLow.includes("finished production");
+        if(isMachProd || isFinProd){
+          for(let c=dayStart; c<=dayEnd; c++){
+            const dayNo = Number(dayHeader[c]);
+            if(!Number.isFinite(dayNo) || dayNo<1 || dayNo>31) continue;
+            const qty = safeNum(row[c]);
+            if(!qty) continue;
+            const dd = String(dayNo).padStart(2,"0");
+            const mm = String(month).padStart(2,"0");
+            const date = `${year}-${mm}-${dd}`;
+            if(isMachProd) machProdMap.set(date, (machProdMap.get(date)||0) + qty);
+            else           finProdMap.set(date, (finProdMap.get(date)||0) + qty);
+          }
+          continue;
+        }
+
+        const unit = String(row[colUnit] ?? "").trim();
+        if(!unit) continue;
+
+        let typeCode = (colType !== -1) ? String(row[colType] ?? "").toUpperCase().trim() : "";
+        if(typeCode !== "HT" && typeCode !== "ST") typeCode = typeFromNameHTST(particulars);
+
+        for(let c=dayStart; c<=dayEnd; c++){
+          const dayNo = Number(dayHeader[c]);
+          if(!Number.isFinite(dayNo) || dayNo<1 || dayNo>31) continue;
+
+          const qty = safeNum(row[c]);
+          if(!qty) continue;
+
+          const dd = String(dayNo).padStart(2,"0");
+          const mm = String(month).padStart(2,"0");
+          const date = `${year}-${mm}-${dd}`;
+
+          if(section === "pulp"){
+            pulpDailyMap.set(date, (pulpDailyMap.get(date)||0) + qty);
+            if(typeCode === "HT") hwDailyMap.set(date, (hwDailyMap.get(date)||0) + qty);
+            else if(typeCode === "ST") swDailyMap.set(date, (swDailyMap.get(date)||0) + qty);
+          }else if(section === "chemical"){
+            chemDailyMap.set(date, (chemDailyMap.get(date)||0) + qty);
+          }
+          // section === "packing" → only goes into itemDaily (below)
+
+          itemDaily.push({ type: section, item: particulars, unit, date, qty, typeCode });
+        }
+      }
+
+      const pulpDaily = [...pulpDailyMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+      const chemDaily = [...chemDailyMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+      const hwDaily   = [...hwDailyMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+      const swDaily   = [...swDailyMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+      const machProdDaily = [...machProdMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+      const finProdDaily  = [...finProdMap.entries()].map(([date,qty])=>({date,qty})).sort((a,b)=>a.date.localeCompare(b.date));
+
+      return { ok:true, sheetName:name, pulpDaily, chemDaily, hwDaily, swDaily, machProdDaily, finProdDaily, itemDaily, year, month };
+    }
+
+    // ====== Extract from daily sheets ======
+    let lineItems=[], dailySummary=[], deptTotalsSorted=[], minDate=null, maxDate=null;
+    let baseYear=null, baseMonth=null;
+    let cons = { ok:false, pulpDaily:[], chemDaily:[], itemDaily:[], hwDaily:[], swDaily:[] };
+    let dailyAvgMap = new Map();   // date → H22 "Daily Average" from each date sheet
+
+    function extractFromWorkbook(wb){
+      const dailySheets = wb.SheetNames.filter(isDailySheet);
+      const skippedSheets = wb.SheetNames.filter(n=>!isDailySheet(n));
+      console.log("Daily sheets matched:",dailySheets.length,"Skipped:",skippedSheets);
+      const allLine=[];
+      const dayAgg=new Map();
+      const h22Map=new Map();    // date → H22 "Daily Average" value
+
+      for(const sheetName of dailySheets){
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header:1, raw:true, defval:"" });
+
+        const parts = sheetName.trim().split(/[-./]/);
+        let [dd,mm,yyyy] = parts;
+        if(yyyy && yyyy.trim().length===2) yyyy='20'+yyyy.trim();
+        yyyy=(yyyy||'2025').trim(); mm=(mm||'01').trim(); dd=(dd||'01').trim();
+        const dateStr = `${yyyy}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+
+        // Ensure this day exists in dayAgg even if no valid line items
+        if(!dayAgg.has(dateStr)) dayAgg.set(dateStr, {prod:0, down:0});
+
+        // Read cell H22 (row 21, col 7 — 0-based) "Daily Average"
+        const h22raw = rows[21]?.[7];
+        const h22val = safeNum(h22raw);
+        if(Number.isFinite(h22val)) h22Map.set(dateStr, h22val);
+
+        const headerRow = findTableHeader(rows);
+        const col = headerRow!==-1 ? buildColumnMap(rows, headerRow) : {sn:0,quality:1,gsm:2,prod:5,dept:8,time:9,remarks:10};
+        const start = headerRow!==-1 ? headerRow+2 : 0;
+
+        for(let r=start;r<rows.length;r++){
+          // Stop once we reach the per-day summary section ("Day total" / "Day Total Hrs." rows)
+          // — anything below it (totals, Today/Todate stats, footers) must not be read as downtime.
+          const rowJoined = (rows[r]||[]).map(x=>String(x ?? "").toLowerCase()).join(" ");
+          if(rowJoined.includes("day total")) break;
+
+          const snRaw = rows[r]?.[col.sn];
+          const snNum = (typeof snRaw==="number") ? snRaw : Number(snRaw);
+          const hasValidSn = Number.isFinite(snNum) && snNum > 0;
+
+          const quality = normalizeQuality(String(rows[r]?.[col.quality] ?? "").trim() || "NA");
+          const gsm = String(rows[r]?.[col.gsm] ?? "").trim() || "NA";
+          const prodRaw = safeNum(rows[r]?.[col.prod]);
+          const deptRaw = String(rows[r]?.[col.dept] ?? "").trim();
+          const dept = normalizeDept(deptRaw);
+          const tmin = timeToMinutes(rows[r]?.[col.time]);
+          const remarks = String(rows[r]?.[col.remarks] ?? "").trim();
+
+          // Production is only valid on rows with an S.N.; on blank-S.N. continuation
+          // rows the prod cell often repeats (merged-cell artifact) and would double-count.
+          const prod = hasValidSn ? prodRaw : 0;
+
+          // Include blank-S.N. rows that still carry a downtime entry; skip truly empty rows.
+          if(!hasValidSn && tmin<=0 && !dept) continue;
+
+          const sn = hasValidSn ? snNum : 0;
+          const deptName = dept || (tmin>0 ? "Unknown" : "");
+          allLine.push({date:dateStr,sn,quality,gsm,prod_mt:prod,downtime_dept:deptName,downtime_min:tmin,remarks});
+
+          const prev = dayAgg.get(dateStr) || {prod:0,down:0};
+          prev.prod += prod;
+          prev.down += tmin;
+          dayAgg.set(dateStr, prev);
+        }
+      }
+
+      const daily = [...dayAgg.entries()]
+        .map(([date,v])=>({date,total_prod_mt:v.prod,total_downtime_min:v.down}))
+        .sort((a,b)=>a.date.localeCompare(b.date));
+
+      const deptMap=new Map();
+      for(const li of allLine){
+        if(!li.downtime_dept) continue;
+        deptMap.set(li.downtime_dept, (deptMap.get(li.downtime_dept)||0) + (li.downtime_min||0));
+      }
+      const deptSorted=[...deptMap.entries()].map(([dept,min])=>({dept,min})).sort((a,b)=>b.min-a.min);
+
+      const dates = allLine.map(x=>x.date).filter(Boolean).sort();
+
+      const mn = dates[0] || null;
+      let by=null, bm=null;
+      if(mn){
+        by = Number(mn.slice(0,4));
+        bm = Number(mn.slice(5,7));
+      }
+
+      return {allLine,daily,deptSorted,mn,mx:dates[dates.length-1]||null, by, bm, h22Map};
+    }
+
+    // ====== Preview table ======
+    function renderPreview(items){
+      const preview=items.slice(0,12);
+      const cols=["date","quality","gsm","prod_mt","downtime_dept","downtime_min"];
+      let html="<table><thead><tr>"+cols.map(c=>`<th>${c}</th>`).join("")+"</tr></thead><tbody>";
+      html+=preview.map(r=>"<tr>"+cols.map(c=>`<td>${r[c]??""}</td>`).join("")+"</tr>").join("");
+      html+="</tbody></table>";
+      $("tableWrap").innerHTML=html;
+    }
+
+    // ====== Charts ======
+    let cProd=null,cQualityPie=null,cGsmPie=null,cQualityTrend=null,cGsmTrend=null,cDown=null,cDownTrend=null,cSpeedTrend=null,cSwTrend=null,cSecTrend=null,cLossTree=null,cPulpGrade=null,cChemGrade=null,cPackGrade=null,cChemPerTon=null;
+    const kill = (c)=>{ if(c) c.destroy(); };
+
+    function renderProduction(daily, fromStr, toStr){
+      // Machine Production from daily sheets (already date-filtered)
+      const labels = daily.map(d => d.date);
+      const machFromSheets = daily.map(d => d.total_prod_mt);
+
+      // Finished Production from the consumption sheet (row D)
+      const finMap = new Map();
+      if(cons.ok && cons.finProdDaily){
+        for(const r of cons.finProdDaily){
+          if(inRange(r.date, fromStr, toStr)) finMap.set(r.date, r.qty);
+        }
+      }
+      const finProd = labels.map(d => finMap.get(d) || 0);
+
+      // Also overlay Machine Production from consumption sheet if available
+      const machConsMap = new Map();
+      if(cons.ok && cons.machProdDaily){
+        for(const r of cons.machProdDaily){
+          if(inRange(r.date, fromStr, toStr)) machConsMap.set(r.date, r.qty);
+        }
+      }
+      // Use consumption-sheet machine prod if daily sheets have no data, otherwise daily sheets win
+      const machProd = labels.map((d, i) => machFromSheets[i] || machConsMap.get(d) || 0);
+
+      kill(cProd);
+      cProd = new Chart($("chartProd"),{
+        type:"bar",
+        data:{
+          labels,
+          datasets:[
+            {
+              label:"Machine Production (MT)",
+              data: machProd,
+              backgroundColor:"rgba(59,130,246,0.7)",
+              borderColor:"#3b82f6",
+              borderWidth:1,
+              yAxisID:"y",
+              order: 2
+            },
+            {
+              type:"line",
+              label:"Finished Production (MT)",
+              data: finProd,
+              borderColor:"#22c55e",
+              backgroundColor:"rgba(34,197,94,0.15)",
+              borderWidth: 2,
+              pointRadius: 4,
+              pointBackgroundColor:"#22c55e",
+              tension: 0.3,
+              fill: false,
+              yAxisID:"y1",
+              order: 1
+            }
+          ]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{
+              position:"top",
+              labels:{ font:{size:13, weight:"bold"}, color:"#111827" }
+            },
+            datalabels:{
+              display: (ctx) => ctx.dataset.type !== "line" && ctx.dataset.data[ctx.dataIndex] > 0,
+              color:"#111827",
+              font:{ weight:"bold", size:10 },
+              anchor:"end",
+              align:"end",
+              formatter:(v) => v.toFixed(1)
+            }
+          },
+          scales:{
+            x:{
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              position:"left",
+              title:{ display:true, text:"Machine Prod (MT)", font:{weight:"bold"}, color:"#3b82f6" },
+              ticks:{ font:{weight:"bold"}, color:"#3b82f6" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y1:{
+              position:"right",
+              title:{ display:true, text:"Finished Prod (MT)", font:{weight:"bold"}, color:"#22c55e" },
+              ticks:{ font:{weight:"bold"}, color:"#22c55e" },
+              grid:{ drawOnChartArea:false }
+            }
+          }
+        }
+      });
+    }
+
+
+    function renderDowntimeBar(deptSorted){
+      const all = deptSorted.filter(d => d.min > 0);
+
+      kill(cDown);
+      cDown = new Chart($("chartDown"),{
+        type:"bar",
+        data:{
+          labels: all.map(d => d.dept),
+          datasets:[{
+            label:"Downtime (min)",
+            data: all.map(d => d.min)
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{
+              display:true,
+              labels:{ font:{weight:"bold", size:13}, color:"#111827" }
+            },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              anchor:"end",
+              align:"end",
+              display:(ctx)=> ctx.dataset.data[ctx.dataIndex] > 0,
+              formatter:(v)=> Math.round(v)
+            }
+          },
+          scales:{
+            x:{
+              ticks:{
+                font:{ weight:"bold", size:11 },
+                color:"#111827",
+                autoSkip:false,
+                maxRotation:45,
+                minRotation:45
+              },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              ticks:{ font:{ weight:"bold" }, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderPie(canvasId, labels, values){
+      return new Chart($(canvasId),{
+        type:"pie",
+        data:{ labels, datasets:[{ data: values }] },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{
+              position:"right",
+              labels:{ font:{weight:"bold"}, color:"#111827" }
+            },
+            datalabels:{
+              color:"#ffffff",
+              font:{ weight:"bold", size:11 },
+              formatter:(value, ctx)=>{
+                const label = ctx.chart.data.labels[ctx.dataIndex];
+                if (value <= 0) return "";
+                return `${label}\n${Number(value).toFixed(1)}`;
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderQualityGsm(filteredLine){
+      const qMap=new Map(), gMap=new Map();
+      for(const r of filteredLine){
+        qMap.set(r.quality,(qMap.get(r.quality)||0)+safeNum(r.prod_mt));
+        gMap.set(r.gsm,(gMap.get(r.gsm)||0)+safeNum(r.prod_mt));
+      }
+      kill(cQualityPie); kill(cGsmPie);
+      cQualityPie = renderPie("chartQualityPie", [...qMap.keys()], [...qMap.values()]);
+      cGsmPie = renderPie("chartGsmPie", [...gMap.keys()], [...gMap.values()]);
+
+      const dates=[...new Set(filteredLine.map(r=>r.date))].sort();
+      const qualities=[...new Set(filteredLine.map(r=>r.quality||"NA"))].sort();
+
+      const map=new Map();
+      for(const r of filteredLine){
+        const q = r.quality || "NA";
+        const k = `${r.date}|${q}`;
+        map.set(k,(map.get(k)||0)+safeNum(r.prod_mt));
+      }
+
+      const datasets = qualities.map(q => ({
+        label: q,
+        data: dates.map(d => Number((map.get(`${d}|${q}`) || 0).toFixed(2))),
+        backgroundColor: qualityColor(q)
+      }));
+
+      kill(cQualityTrend);
+      cQualityTrend = new Chart($("chartQualityTrend"),{
+        type:"bar",
+        data:{ labels: dates, datasets },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              display:(ctx)=> ctx.dataset.data[ctx.dataIndex] > 0,
+              formatter:(v)=> v.toFixed(1)
+            }
+          },
+          scales:{
+            x:{
+              stacked:true,
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              stacked:true,
+              title:{ display:true, text:"Production (MT)", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+
+      // GSM-wise Trend (Stacked Column)
+      const gsmVals = [...new Set(filteredLine.map(r => r.gsm || "NA"))].sort();
+      const gMap2 = new Map();
+      for(const r of filteredLine){
+        const g = r.gsm || "NA";
+        const k = `${r.date}|${g}`;
+        gMap2.set(k, (gMap2.get(k)||0) + safeNum(r.prod_mt));
+      }
+      const gsmDatasets = gsmVals.map((g, i) => ({
+        label: String(g),
+        data: dates.map(d => Number((gMap2.get(`${d}|${g}`) || 0).toFixed(2))),
+        backgroundColor: gsmColor(g, i)
+      }));
+
+      kill(cGsmTrend);
+      cGsmTrend = new Chart($("chartGsmTrend"),{
+        type:"bar",
+        data:{ labels: dates, datasets: gsmDatasets },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              display:(ctx)=> ctx.dataset.data[ctx.dataIndex] > 0,
+              formatter:(v)=> v.toFixed(1)
+            }
+          },
+          scales:{
+            x:{
+              stacked:true,
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              stacked:true,
+              title:{ display:true, text:"Production (MT)", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    const DOWN_COLORS = [
+      "#ef4444","#3b82f6","#f59e0b","#22c55e","#8b5cf6",
+      "#ec4899","#06b6d4","#f97316","#6366f1","#84cc16",
+      "#14b8a6","#e11d48","#a3a3a3","#d946ef","#0ea5e9"
+    ];
+
+    function renderEfficiency(daily){
+      const labels = daily.map(d => d.date);
+      const dateSet = new Set(labels);
+
+      // Build dept → date → minutes map from lineItems
+      const deptDateMap = new Map();
+      for(const li of lineItems){
+        if(!li.downtime_dept || !li.downtime_min || !dateSet.has(li.date)) continue;
+        if(!deptDateMap.has(li.downtime_dept)) deptDateMap.set(li.downtime_dept, new Map());
+        const dm = deptDateMap.get(li.downtime_dept);
+        dm.set(li.date, (dm.get(li.date)||0) + li.downtime_min);
+      }
+
+      // Sort depts by total downtime descending
+      const deptTotals = [...deptDateMap.entries()].map(([dept, dm]) => {
+        let total = 0; dm.forEach(v => total += v);
+        return { dept, dm, total };
+      }).sort((a,b) => b.total - a.total);
+
+      const datasets = deptTotals.map((d, i) => ({
+        label: d.dept,
+        data: labels.map(date => d.dm.get(date) || 0),
+        backgroundColor: DOWN_COLORS[i % DOWN_COLORS.length],
+        borderWidth: 1
+      }));
+
+      kill(cDownTrend);
+      cDownTrend = new Chart($("chartDownTrend"),{
+        type:"bar",
+        data:{ labels, datasets },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{
+              display:(ctx) => {
+                const val = ctx.dataset.data[ctx.dataIndex];
+                // Only show label on the topmost segment
+                const dsIdx = ctx.datasetIndex;
+                const dIdx = ctx.dataIndex;
+                if(val <= 0) return false;
+                for(let k = datasets.length - 1; k > dsIdx; k--){
+                  if(datasets[k].data[dIdx] > 0) return false;
+                }
+                return true;
+              },
+              color:"#111827",
+              font:{ weight:"bold", size:10 },
+              anchor:"end",
+              align:"end",
+              formatter:(v, ctx) => {
+                // Show total for this date
+                const dIdx = ctx.dataIndex;
+                let total = 0;
+                for(const ds of datasets) total += ds.data[dIdx] || 0;
+                return total.toFixed(0);
+              }
+            }
+          },
+          scales:{
+            x:{
+              stacked:true,
+              ticks:{ font:{weight:"bold",size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              stacked:true,
+              title:{ display:true, text:"Downtime (min)", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderSpeedTrend(daily, fromStr, toStr){
+      const RATED = 1380, DECKLE = 2.85;
+      const labels = daily.map(d => d.date);
+      const speeds = daily.map(d => {
+        const h22 = dailyAvgMap.get(d.date);
+        const gsm = (h22 && Number.isFinite(h22)) ? h22 : 0;
+        const run = 1440 - d.total_downtime_min;
+        return (run > 0 && gsm > 0) ? (d.total_prod_mt * 1000000) / (run * DECKLE * gsm) : 0;
+      });
+      const rated = labels.map(() => RATED);
+
+      kill(cSpeedTrend);
+      cSpeedTrend = new Chart($("chartSpeedTrend"),{
+        type:"bar",
+        data:{ labels, datasets:[
+          { label:"Actual Speed (m/min)", data:speeds, backgroundColor:"rgba(6,182,212,0.7)", borderColor:"#06b6d4", borderWidth:1, order:2 },
+          { type:"line", label:"Rated (1380)", data:rated, borderColor:"#ef4444", borderWidth:2, borderDash:[6,4], pointRadius:0, fill:false, order:1 }
+        ]},
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{ display:(ctx)=> ctx.dataset.type !== "line" && ctx.dataset.data[ctx.dataIndex] > 0, color:"#111827", font:{weight:"bold",size:10}, anchor:"end", align:"end", formatter:(v)=>v.toFixed(0) }
+          },
+          scales:{
+            x:{ ticks:{ font:{weight:"bold",size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false }, grid:{color:"rgba(0,0,0,0.08)"} },
+            y:{ title:{display:true,text:"m/min",font:{weight:"bold"},color:"#111827"}, ticks:{font:{weight:"bold"},color:"#111827"}, grid:{color:"rgba(0,0,0,0.08)"} }
+          }
+        }
+      });
+    }
+
+    function renderSwTrend(daily, fromStr, toStr){
+      const labels = daily.map(d => d.date);
+      const swPcts = daily.map(d => {
+        if(d.total_prod_mt <= 0 || !cons.ok) return 0;
+        let sw = 0;
+        for(const r of (cons.swDaily || [])){ if(r.date === d.date) sw += r.qty; }
+        return d.total_prod_mt > 0 ? (sw / d.total_prod_mt) * 100 : 0;
+      });
+
+      kill(cSwTrend);
+      cSwTrend = new Chart($("chartSwTrend"),{
+        type:"line",
+        data:{ labels, datasets:[{ label:"SW % per MT Prod", data:swPcts, borderColor:"#22c55e", backgroundColor:"rgba(34,197,94,0.15)", borderWidth:2, pointRadius:4, pointBackgroundColor:"#22c55e", tension:0.3, fill:true }] },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{ display:(ctx)=> ctx.dataset.data[ctx.dataIndex] > 0, color:"#111827", font:{weight:"bold",size:10}, anchor:"end", align:"end", formatter:(v)=>v.toFixed(1)+"%" }
+          },
+          scales:{
+            x:{ ticks:{ font:{weight:"bold",size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false }, grid:{color:"rgba(0,0,0,0.08)"} },
+            y:{ title:{display:true,text:"SW %",font:{weight:"bold"},color:"#111827"}, ticks:{font:{weight:"bold"},color:"#111827"}, grid:{color:"rgba(0,0,0,0.08)"} }
+          }
+        }
+      });
+    }
+
+    function renderSecTrend(daily, fromStr, toStr){
+      if(!cons.ok) return;
+      const labels = daily.map(d => d.date);
+
+      // Build per-day utility maps
+      const steamDay=new Map(), gasDay=new Map(), powerDay=new Map();
+      for(const r of (cons.itemDaily||[])){
+        if(r.type !== "utility") continue;
+        const nm = r.item.toLowerCase();
+        if(nm.includes("steam"))      steamDay.set(r.date, (steamDay.get(r.date)||0)+r.qty);
+        else if(nm.includes("gas"))   gasDay.set(r.date, (gasDay.get(r.date)||0)+r.qty);
+        else if(nm.includes("power")) powerDay.set(r.date, (powerDay.get(r.date)||0)+r.qty);
+      }
+
+      const steamPerMt = labels.map((d,i) => daily[i].total_prod_mt > 0 ? (steamDay.get(d)||0)/daily[i].total_prod_mt : 0);
+      const powerPerMt = labels.map((d,i) => daily[i].total_prod_mt > 0 ? (powerDay.get(d)||0)/daily[i].total_prod_mt : 0);
+      const gasPerMt   = labels.map((d,i) => daily[i].total_prod_mt > 0 ? (gasDay.get(d)||0)/daily[i].total_prod_mt : 0);
+
+      kill(cSecTrend);
+      cSecTrend = new Chart($("chartSecTrend"),{
+        type:"line",
+        data:{ labels, datasets:[
+          { label:"Steam (MT/MT)", data:steamPerMt, borderColor:"#ef4444", borderWidth:2, pointRadius:3, tension:0.3, yAxisID:"y" },
+          { label:"Gas (SCM/MT)", data:gasPerMt, borderColor:"#f59e0b", borderWidth:2, pointRadius:3, tension:0.3, yAxisID:"y" },
+          { label:"Power (Units/MT)", data:powerPerMt, borderColor:"#3b82f6", borderWidth:2, pointRadius:3, tension:0.3, yAxisID:"y1" }
+        ]},
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{ position:"top", labels:{ font:{weight:"bold"}, color:"#111827" } },
+            datalabels:{ display:false }
+          },
+          scales:{
+            x:{ ticks:{ font:{weight:"bold",size:11}, color:"#111827", maxRotation:45, minRotation:45, autoSkip:false }, grid:{color:"rgba(0,0,0,0.08)"} },
+            y:{ position:"left", title:{display:true,text:"Steam/Gas per MT",font:{weight:"bold"},color:"#111827"}, ticks:{font:{weight:"bold"},color:"#111827"}, grid:{color:"rgba(0,0,0,0.08)"} },
+            y1:{ position:"right", title:{display:true,text:"Power Units/MT",font:{weight:"bold"},color:"#3b82f6"}, ticks:{font:{weight:"bold"},color:"#3b82f6"}, grid:{drawOnChartArea:false} }
+          }
+        }
+      });
+    }
+
+    function renderLossTree(daily, fromStr, toStr){
+      const RATED=1380, DECKLE=2.85;
+      const days = daily.length || 1;
+      const h22vals = [...dailyAvgMap.entries()].filter(([d])=>inRange(d,fromStr,toStr)).map(([,v])=>v).filter(v=>Number.isFinite(v));
+      const avgGSM = h22vals.length ? h22vals.reduce((a,b)=>a+b,0)/h22vals.length : 0;
+      if(!avgGSM) return;
+
+      const totalProd = daily.reduce((a,b)=>a+b.total_prod_mt,0);
+      const totalDown = daily.reduce((a,b)=>a+b.total_downtime_min,0);
+      const totalMin = 1440 * days;
+      const capacity = (RATED * avgGSM * DECKLE * totalMin) / 1000000;
+      const downtimeLoss = (RATED * avgGSM * DECKLE * totalDown) / 1000000;
+      const speedLoss = Math.max(0, (capacity - downtimeLoss) - totalProd);
+
+      kill(cLossTree);
+      cLossTree = new Chart($("chartLossTree"),{
+        type:"bar",
+        data:{
+          labels:["Capacity","Actual Production","Downtime Loss","Speed Loss"],
+          datasets:[{
+            data:[capacity, totalProd, downtimeLoss, speedLoss],
+            backgroundColor:["rgba(59,130,246,0.7)","rgba(34,197,94,0.7)","rgba(239,68,68,0.7)","rgba(245,158,11,0.7)"],
+            borderWidth:1
+          }]
+        },
+        options:{
+          indexAxis:"y",
+          responsive:true,
+          plugins:{
+            legend:{ display:false },
+            datalabels:{ color:"#111827", font:{weight:"bold",size:12}, anchor:"end", align:"end", formatter:(v)=>v.toFixed(1)+" MT" }
+          },
+          scales:{
+            x:{ title:{display:true,text:"MT",font:{weight:"bold"},color:"#111827"}, ticks:{font:{weight:"bold"},color:"#111827"}, grid:{color:"rgba(0,0,0,0.08)"} },
+            y:{ ticks:{font:{weight:"bold",size:13},color:"#111827"}, grid:{display:false} }
+          }
+        }
+      });
+    }
+
+    // ====== Consumption charts + totals ======
+    function renderConsumption(fromStr,toStr){
+      if(!cons.ok){
+        return { pulpTotal:0, chemTotal:0, hwTotal:0, swTotal:0, unknownPulp:0 };
+      }
+
+      const pulpF = cons.pulpDaily.filter(x => inRange(x.date, fromStr, toStr));
+      const chemF = cons.chemDaily.filter(x => inRange(x.date, fromStr, toStr));
+
+      const pulpTotal = pulpF.reduce((a,b)=>a+b.qty,0);
+      const chemTotal = chemF.reduce((a,b)=>a+b.qty,0);
+
+      let hwTotal = 0, swTotal = 0, unknownPulp = 0;
+
+      const hwF = (cons.hwDaily || []).filter(x => inRange(x.date, fromStr, toStr));
+      const swF = (cons.swDaily || []).filter(x => inRange(x.date, fromStr, toStr));
+
+      hwTotal = hwF.reduce((a,b)=>a+b.qty,0);
+      swTotal = swF.reduce((a,b)=>a+b.qty,0);
+
+      if((hwTotal + swTotal) === 0 && pulpTotal > 0){
+        for(const r of cons.itemDaily){
+          if(r.type !== "pulp") continue;
+          if(!inRange(r.date, fromStr, toStr)) continue;
+
+          const cls = pulpTypeFromName(r.item);
+          if(cls === "hard") hwTotal += safeNum(r.qty);
+          else if(cls === "soft") swTotal += safeNum(r.qty);
+          else unknownPulp += safeNum(r.qty);
+        }
+      } else {
+        unknownPulp = Math.max(0, pulpTotal - (hwTotal + swTotal));
+      }
+
+      return { pulpTotal, chemTotal, hwTotal, swTotal, unknownPulp };
+    }
+
+    function renderPulpGradeBar(fromStr, toStr){
+      $("pulpGradeWarn").style.display = cons.ok ? "none" : "block";
+      if(!cons.ok){
+        $("pulpGradeWarn").textContent = "Consumption sheet not parsed: " + (cons.reason || "unknown");
+        return;
+      }
+
+      // Aggregate pulp items for selected date range
+      const gradeMap = new Map();
+      for(const r of cons.itemDaily){
+        if(r.type !== "pulp") continue;
+        if(!inRange(r.date, fromStr, toStr)) continue;
+        const prev = gradeMap.get(r.item) || { qty:0, typeCode:r.typeCode };
+        prev.qty += safeNum(r.qty);
+        // keep typeCode from first hit (they should all be the same per item)
+        gradeMap.set(r.item, prev);
+      }
+
+      // Sort descending by qty, exclude zeros
+      const items = [...gradeMap.entries()]
+        .map(([name, v]) => ({ name, qty: v.qty, typeCode: v.typeCode }))
+        .filter(x => x.qty > 0)
+        .sort((a,b) => b.qty - a.qty);
+
+      if(!items.length){
+        $("pulpGradeWarn").style.display = "block";
+        $("pulpGradeWarn").textContent = "No pulp consumption data in selected range.";
+        kill(cPulpGrade); cPulpGrade = null;
+        return;
+      }
+
+      // Classify each item as softwood / hardwood using typeCode + fallback
+      const barColors = items.map(x => {
+        const tc = (x.typeCode || "").toUpperCase();
+        if(tc === "ST") return "#3b82f6";           // softwood → blue
+        if(tc === "HT") return "#22c55e";           // hardwood → green
+        const cls = pulpTypeFromName(x.name);
+        if(cls === "soft") return "#3b82f6";
+        if(cls === "hard") return "#22c55e";
+        return "#94a3b8";                           // unknown → grey
+      });
+
+      // Shorten long item names for labels
+      const shortName = (n) => {
+        let s = n.replace(/^Imported\s+/i, "").replace(/\s*\(AD\)\s*/gi, " ").trim();
+        return s.length > 30 ? s.slice(0,28) + "…" : s;
+      };
+
+      kill(cPulpGrade);
+      cPulpGrade = new Chart($("chartPulpGrade"),{
+        type:"bar",
+        data:{
+          labels: items.map(x => shortName(x.name)),
+          datasets:[{
+            label:"Pulp Consumption (MT)",
+            data: items.map(x => Number(x.qty.toFixed(3))),
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
+          }]
+        },
+        options:{
+          indexAxis:"y",
+          responsive:true,
+          plugins:{
+            legend:{
+              display:false
+            },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              anchor:"end",
+              align:"end",
+              formatter:(v) => v.toFixed(1)
+            },
+            tooltip:{
+              callbacks:{
+                label:(ctx)=>{
+                  const item = items[ctx.dataIndex];
+                  const type = (item.typeCode === "ST" || pulpTypeFromName(item.name)==="soft")
+                    ? "Softwood" : (item.typeCode === "HT" || pulpTypeFromName(item.name)==="hard")
+                    ? "Hardwood" : "Unknown";
+                  return `${type}: ${ctx.formattedValue} MT`;
+                }
+              }
+            }
+          },
+          scales:{
+            x:{
+              title:{ display:true, text:"MT", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderChemGradeBar(fromStr, toStr){
+      $("chemGradeWarn").style.display = cons.ok ? "none" : "block";
+      if(!cons.ok){
+        $("chemGradeWarn").textContent = "Consumption sheet not parsed: " + (cons.reason || "unknown");
+        return;
+      }
+
+      // Aggregate chemical items for selected date range (raw sum — matches Excel)
+      const gradeMap = new Map();
+      for(const r of cons.itemDaily){
+        if(r.type !== "chemical") continue;
+        if(!inRange(r.date, fromStr, toStr)) continue;
+        const prev = gradeMap.get(r.item) || { qty:0, unit: r.unit || "Kg" };
+        prev.qty += safeNum(r.qty);
+        gradeMap.set(r.item, prev);
+      }
+
+      // Sort descending by qty, exclude zeros
+      const items = [...gradeMap.entries()]
+        .map(([name, v]) => ({ name, qty: v.qty, unit: v.unit }))
+        .filter(x => x.qty > 0)
+        .sort((a,b) => b.qty - a.qty);
+
+      if(!items.length){
+        $("chemGradeWarn").style.display = "block";
+        $("chemGradeWarn").textContent = "No chemical consumption data in selected range.";
+        kill(cChemGrade); cChemGrade = null;
+        return;
+      }
+
+      // Grand total for the subtitle
+      const grandTotal = items.reduce((s, x) => s + x.qty, 0);
+
+      // Color palette (cycle through for distinct bars)
+      const palette = [
+        "#f59e0b","#8b5cf6","#ef4444","#06b6d4","#ec4899","#14b8a6",
+        "#f97316","#6366f1","#84cc16","#e11d48","#0ea5e9","#a855f7",
+        "#10b981","#eab308","#d946ef","#64748b","#fb923c","#2dd4bf",
+        "#7c3aed","#facc15","#38bdf8","#e879f9","#4ade80","#fbbf24"
+      ];
+      const barColors = items.map((_,i) => palette[i % palette.length]);
+
+      // Shorten names for Y axis labels
+      const shortName = (n) => {
+        let s = n.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+        return s.length > 35 ? s.slice(0,33) + "…" : s;
+      };
+
+      kill(cChemGrade);
+      cChemGrade = new Chart($("chartChemGrade"),{
+        type:"bar",
+        data:{
+          labels: items.map(x => shortName(x.name)),
+          datasets:[{
+            label:"Chemical Consumption (Kg)",
+            data: items.map(x => Number(x.qty.toFixed(3))),
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
+          }]
+        },
+        options:{
+          indexAxis:"y",
+          responsive:true,
+          plugins:{
+            legend:{ display:false },
+            title:{
+              display:true,
+              text: `Total: ${grandTotal.toFixed(1)} Kg  |  Items: ${items.length}`,
+              font:{ size:13, weight:"bold" },
+              color:"#111827",
+              padding:{ bottom:8 }
+            },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              anchor:"end",
+              align:"end",
+              formatter:(v) => v >= 1 ? v.toFixed(1) : v.toFixed(2)
+            },
+            tooltip:{
+              callbacks:{
+                label:(ctx)=>{
+                  const item = items[ctx.dataIndex];
+                  return `${item.name}: ${ctx.formattedValue} ${item.unit}`;
+                }
+              }
+            }
+          },
+          scales:{
+            x:{
+              title:{ display:true, text:"Kg", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderPackGradeBar(fromStr, toStr){
+      $("packGradeWarn").style.display = cons.ok ? "none" : "block";
+      if(!cons.ok){
+        $("packGradeWarn").textContent = "Consumption sheet not parsed: " + (cons.reason || "unknown");
+        return;
+      }
+
+      // Aggregate packing items for selected date range (raw sum — matches Excel)
+      const gradeMap = new Map();
+      for(const r of cons.itemDaily){
+        if(r.type !== "packing") continue;
+        if(!inRange(r.date, fromStr, toStr)) continue;
+        const prev = gradeMap.get(r.item) || { qty:0, unit: r.unit || "" };
+        prev.qty += safeNum(r.qty);
+        gradeMap.set(r.item, prev);
+      }
+
+      // Sort descending by qty, exclude zeros
+      const items = [...gradeMap.entries()]
+        .map(([name, v]) => ({ name, qty: v.qty, unit: v.unit }))
+        .filter(x => x.qty > 0)
+        .sort((a,b) => b.qty - a.qty);
+
+      if(!items.length){
+        $("packGradeWarn").style.display = "block";
+        $("packGradeWarn").textContent = "No packing material data in selected range.";
+        kill(cPackGrade); cPackGrade = null;
+        return;
+      }
+
+      // Color by unit type
+      const unitColor = (u) => {
+        const ul = String(u).toLowerCase().replace(/[^a-z]/g,"");
+        if(ul === "kg")  return "#f59e0b";   // amber for Kg
+        if(ul === "nos") return "#8b5cf6";   // violet for NOS
+        return "#64748b";                    // grey fallback
+      };
+      const barColors = items.map(x => unitColor(x.unit));
+
+      // Grand total per unit for subtitle
+      const unitTotals = new Map();
+      for(const x of items){
+        unitTotals.set(x.unit, (unitTotals.get(x.unit)||0) + x.qty);
+      }
+      const subtitle = [...unitTotals.entries()]
+        .map(([u,t]) => `${t.toFixed(1)} ${u}`)
+        .join("  |  ");
+
+      kill(cPackGrade);
+      cPackGrade = new Chart($("chartPackGrade"),{
+        type:"bar",
+        data:{
+          labels: items.map(x => x.name),
+          datasets:[{
+            label:"Packing Consumption",
+            data: items.map(x => Number(x.qty.toFixed(3))),
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
+          }]
+        },
+        options:{
+          indexAxis:"y",
+          responsive:true,
+          plugins:{
+            legend:{ display:false },
+            title:{
+              display:true,
+              text: `Totals: ${subtitle}  |  Items: ${items.length}`,
+              font:{ size:13, weight:"bold" },
+              color:"#111827",
+              padding:{ bottom:8 }
+            },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              anchor:"end",
+              align:"end",
+              formatter:(v, ctx) => {
+                const u = items[ctx.dataIndex].unit;
+                return `${v >= 1 ? v.toFixed(1) : v.toFixed(2)} ${u}`;
+              }
+            },
+            tooltip:{
+              callbacks:{
+                label:(ctx)=>{
+                  const item = items[ctx.dataIndex];
+                  return `${item.name}: ${ctx.formattedValue} ${item.unit}`;
+                }
+              }
+            }
+          },
+          scales:{
+            x:{
+              title:{ display:true, text:"Quantity", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              ticks:{ font:{weight:"bold", size:12}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+    }
+
+    function renderChemPerTon(fromStr, toStr, prodTotal){
+      $("chemPerTonWarn").style.display = cons.ok ? "none" : "block";
+      if(!cons.ok){
+        $("chemPerTonWarn").textContent = "Consumption sheet not parsed: " + (cons.reason || "unknown");
+        $("chemPerTonTable").innerHTML = "";
+        return;
+      }
+
+      // Aggregate chemical items for selected date range
+      const gradeMap = new Map();
+      for(const r of cons.itemDaily){
+        if(r.type !== "chemical") continue;
+        if(!inRange(r.date, fromStr, toStr)) continue;
+        const prev = gradeMap.get(r.item) || { qty:0, unit: r.unit || "Kg" };
+        prev.qty += safeNum(r.qty);
+        gradeMap.set(r.item, prev);
+      }
+
+      // Sort descending, exclude zeros
+      const items = [...gradeMap.entries()]
+        .map(([name, v]) => ({
+          name,
+          totalKg: v.qty,
+          unit: v.unit,
+          kgPerMt: prodTotal > 0 ? v.qty / prodTotal : 0
+        }))
+        .filter(x => x.totalKg > 0)
+        .sort((a,b) => b.kgPerMt - a.kgPerMt);
+
+      if(!items.length){
+        $("chemPerTonWarn").style.display = "block";
+        $("chemPerTonWarn").textContent = "No chemical data in selected range.";
+        $("chemPerTonTable").innerHTML = "";
+        kill(cChemPerTon); cChemPerTon = null;
+        return;
+      }
+
+      if(prodTotal <= 0){
+        $("chemPerTonWarn").style.display = "block";
+        $("chemPerTonWarn").textContent = "No production data — cannot compute Kg/MT.";
+        $("chemPerTonTable").innerHTML = "";
+        kill(cChemPerTon); cChemPerTon = null;
+        return;
+      }
+
+      // Grand total chemical Kg/MT
+      const grandKg = items.reduce((s,x) => s+x.totalKg, 0);
+      const grandKgPerMt = grandKg / prodTotal;
+
+      // Bar chart
+      const palette = [
+        "#f59e0b","#8b5cf6","#ef4444","#06b6d4","#ec4899","#14b8a6",
+        "#f97316","#6366f1","#84cc16","#e11d48","#0ea5e9","#a855f7",
+        "#10b981","#eab308","#d946ef","#64748b","#fb923c","#2dd4bf",
+        "#7c3aed","#facc15","#38bdf8","#e879f9","#4ade80","#fbbf24"
+      ];
+      const barColors = items.map((_,i) => palette[i % palette.length]);
+
+      const shortName = (n) => {
+        let s = n.replace(/\s*\([^)]*\)\s*/g, " ").trim();
+        return s.length > 35 ? s.slice(0,33) + "…" : s;
+      };
+
+      kill(cChemPerTon);
+      cChemPerTon = new Chart($("chartChemPerTon"),{
+        type:"bar",
+        data:{
+          labels: items.map(x => shortName(x.name)),
+          datasets:[{
+            label:"Kg per MT Production",
+            data: items.map(x => Number(x.kgPerMt.toFixed(4))),
+            backgroundColor: barColors,
+            borderColor: barColors,
+            borderWidth: 1
+          }]
+        },
+        options:{
+          indexAxis:"y",
+          responsive:true,
+          plugins:{
+            legend:{ display:false },
+            title:{
+              display:true,
+              text: `Production: ${prodTotal.toFixed(2)} MT  |  Total Chem: ${grandKg.toFixed(1)} Kg  |  Overall: ${grandKgPerMt.toFixed(2)} Kg/MT`,
+              font:{ size:12, weight:"bold" },
+              color:"#111827",
+              padding:{ bottom:8 }
+            },
+            datalabels:{
+              color:"#111827",
+              font:{ weight:"bold", size:11 },
+              anchor:"end",
+              align:"end",
+              formatter:(v) => v >= 0.01 ? v.toFixed(3) : v.toFixed(4)
+            },
+            tooltip:{
+              callbacks:{
+                label:(ctx) => {
+                  const item = items[ctx.dataIndex];
+                  return `${item.name}: ${item.totalKg.toFixed(1)} Kg ÷ ${prodTotal.toFixed(2)} MT = ${item.kgPerMt.toFixed(4)} Kg/MT`;
+                }
+              }
+            }
+          },
+          scales:{
+            x:{
+              title:{ display:true, text:"Kg / MT", font:{weight:"bold"}, color:"#111827" },
+              ticks:{ font:{weight:"bold"}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            },
+            y:{
+              ticks:{ font:{weight:"bold", size:11}, color:"#111827" },
+              grid:{ color:"rgba(0,0,0,0.08)" }
+            }
+          }
+        }
+      });
+
+      // Detail table below chart
+      let html = '<table><thead><tr>' +
+        '<th>#</th><th>Chemical</th><th>Total (Kg)</th><th>Production (MT)</th><th>Kg / MT</th>' +
+        '</tr></thead><tbody>';
+      items.forEach((x, i) => {
+        html += `<tr>
+          <td>${i+1}</td>
+          <td>${x.name}</td>
+          <td style="text-align:right">${x.totalKg.toFixed(3)}</td>
+          <td style="text-align:right">${prodTotal.toFixed(2)}</td>
+          <td style="text-align:right;font-weight:700">${x.kgPerMt.toFixed(4)}</td>
+        </tr>`;
+      });
+      html += `<tr style="font-weight:700;border-top:2px solid #111827">
+        <td></td><td>TOTAL</td>
+        <td style="text-align:right">${grandKg.toFixed(3)}</td>
+        <td style="text-align:right">${prodTotal.toFixed(2)}</td>
+        <td style="text-align:right">${grandKgPerMt.toFixed(4)}</td>
+      </tr>`;
+      html += '</tbody></table>';
+      $("chemPerTonTable").innerHTML = html;
+    }
+
+    function renderUtilityTable(fromStr, toStr){
+      const el = $("utilityTable");
+      if(!cons.ok || !cons.itemDaily){
+        el.innerHTML = "<p>No utility data</p>";
+        return;
+      }
+      const utilItems = cons.itemDaily.filter(r => r.type === "utility" && inRange(r.date, fromStr, toStr));
+      if(!utilItems.length){
+        el.innerHTML = "<p>No utility data in selected range</p>";
+        return;
+      }
+
+      // Group by item name
+      const itemMap = new Map();
+      for(const r of utilItems){
+        if(!itemMap.has(r.item)) itemMap.set(r.item, { unit: r.unit, total: 0, days: new Map() });
+        const entry = itemMap.get(r.item);
+        entry.total += r.qty;
+        entry.days.set(r.date, (entry.days.get(r.date)||0) + r.qty);
+      }
+
+      // Collect all dates sorted
+      const allDates = [...new Set(utilItems.map(r=>r.date))].sort();
+
+      let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">';
+      html += '<thead><tr style="background:#f1f5f9;position:sticky;top:0">';
+      html += '<th style="padding:6px 8px;text-align:left;border:1px solid #e2e8f0;white-space:nowrap">Particulars</th>';
+      html += '<th style="padding:6px 8px;text-align:center;border:1px solid #e2e8f0">Unit</th>';
+      for(const d of allDates){
+        const day = d.slice(8);
+        html += `<th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0">${day}</th>`;
+      }
+      html += '<th style="padding:6px 8px;text-align:right;border:1px solid #e2e8f0;font-weight:700;background:#e0f2fe">Total</th>';
+      html += '</tr></thead><tbody>';
+
+      for(const [item, data] of itemMap){
+        html += '<tr>';
+        html += `<td style="padding:5px 8px;border:1px solid #e2e8f0;white-space:nowrap">${item}</td>`;
+        html += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:center">${data.unit}</td>`;
+        for(const d of allDates){
+          const v = data.days.get(d) || 0;
+          html += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right">${v > 0 ? v.toFixed(1) : '—'}</td>`;
+        }
+        html += `<td style="padding:5px 8px;border:1px solid #e2e8f0;text-align:right;font-weight:700;background:#e0f2fe">${data.total.toFixed(1)}</td>`;
+        html += '</tr>';
+      }
+
+      html += '</tbody></table></div>';
+      el.innerHTML = html;
+    }
+
+    function renderConsumptionTable(fromStr, toStr){
+      if(!cons.ok || !cons.itemDaily?.length){
+        $("consTable").innerHTML = "<div class='warnBox'>No item-level consumption rows found.</div>";
+        return;
+      }
+      const mixMap = new Map();
+      for(const r of cons.itemDaily){
+        if(!inRange(r.date, fromStr, toStr)) continue;
+        const key = `${r.type}|${r.item}|${r.unit}`;
+        const prev = mixMap.get(key) || { type:r.type, item:r.item, unit:r.unit, total:0 };
+        prev.total += safeNum(r.qty);
+        mixMap.set(key, prev);
+      }
+      const top = [...mixMap.values()].sort((a,b)=>b.total-a.total).slice(0,12);
+
+      let html = "<table><thead><tr><th>Type</th><th>Item</th><th>Total</th><th>Unit</th></tr></thead><tbody>";
+      html += top.map(x =>
+        `<tr>
+          <td>${String(x.type).toUpperCase()}</td>
+          <td>${x.item}</td>
+          <td>${x.total.toFixed(2)}</td>
+          <td>${x.unit || ""}</td>
+        </tr>`
+      ).join("");
+      html += "</tbody></table>";
+      $("consTable").innerHTML = html;
+    }
+
+    // ====== KPI renderer ======
+    function renderKpis(daily, totals){
+      const totalProd = daily.reduce((a,b)=>a+b.total_prod_mt,0);
+      const totalDownMin = daily.reduce((a,b)=>a+b.total_downtime_min,0);
+      const days = Math.max(daily.length, 1);
+      const avgProd = totalProd / days;
+      const downPerDay = totalDownMin / days;
+      const pulpPerMt = totalProd > 0 ? (totals.pulpTotal / totalProd) : 0;
+      const chemPerMt = totalProd > 0 ? (totals.chemTotal / totalProd) : 0;
+
+      // --- Constants ---
+      const RATED_SPEED = 1380;
+      const TRIM_WIDTH  = 2.85;
+
+      // --- Average GSM from H22 ---
+      const h22ForExp = [...dailyAvgMap.entries()]
+        .filter(([d]) => inRange(d, totals._fromStr, totals._toStr))
+        .map(([,v]) => v).filter(v => Number.isFinite(v));
+      const avgGSM = h22ForExp.length > 0 ? h22ForExp.reduce((a,b)=>a+b,0) / h22ForExp.length : 0;
+
+      // --- Machine calculations ---
+      const totalMin   = 1440 * days;
+      const runningMin = totalMin - totalDownMin;
+      const runningHrs = runningMin / 60;
+      const availability = totalMin > 0 ? runningMin / totalMin : 0;
+      const avgSpeed = (runningMin > 0 && avgGSM > 0) ? (totalProd * 1000000) / (runningMin * TRIM_WIDTH * avgGSM) : 0;
+      const performance = RATED_SPEED > 0 ? avgSpeed / RATED_SPEED : 0;
+      const quality = 1.0;
+      const oee = availability * performance * quality * 100;
+
+      // --- Capacity ---
+      const capacityPerDay = avgGSM > 0 ? (RATED_SPEED * avgGSM * TRIM_WIDTH * 1440) / 1000000 : 0;
+      const totalCapacity = capacityPerDay * days;
+      const capEfficiency = totalCapacity > 0 ? (totalProd / totalCapacity) * 100 : 0;
+
+      // --- Loss Analysis ---
+      const downtimeLoss = avgGSM > 0 ? (RATED_SPEED * avgGSM * TRIM_WIDTH * totalDownMin) / 1000000 : 0;
+      const speedLoss    = totalCapacity > 0 ? Math.max(0, (totalCapacity - downtimeLoss) - totalProd) : 0;
+      const totalLoss    = downtimeLoss + speedLoss;
+      const lossPct      = totalCapacity > 0 ? (totalLoss / totalCapacity) * 100 : 0;
+
+      // --- Best / Worst day ---
+      const prodDays = daily.filter(d => d.total_prod_mt > 0);
+      const bestDay  = prodDays.length ? prodDays.reduce((a,b) => a.total_prod_mt > b.total_prod_mt ? a : b) : null;
+      const worstDay = prodDays.length ? prodDays.reduce((a,b) => a.total_prod_mt < b.total_prod_mt ? a : b) : null;
+
+      // --- Month projections ---
+      const mYear = baseYear || new Date().getFullYear();
+      const mMonth = baseMonth || (new Date().getMonth() + 1);
+      const daysInMonth = new Date(mYear, mMonth, 0).getDate();
+      const projectedProd = avgProd * daysInMonth;
+      const remainingDays = Math.max(0, daysInMonth - daily.length);
+      const dailyExpMT = (1440 * 60 * 23 * 2.85 * avgGSM) / 1000000;
+      const expectedProd = totalProd + (dailyExpMT * remainingDays);
+
+      // --- Production per Hour ---
+      const prodPerHr = runningHrs > 0 ? totalProd / runningHrs : 0;
+
+      // --- Machine Health Index ---
+      const speedScore = Math.min(100, avgSpeed > 0 ? (avgSpeed / RATED_SPEED) * 100 : 0);
+      const availScore = availability * 100;
+      const healthIndex = (speedScore * 0.30) + (availScore * 0.30) + (oee * 0.40);
+
+      // ========== BLOCK 1: MACHINE PERFORMANCE ==========
+      $("kpiOEE").textContent = oee > 0 ? oee.toFixed(1) + " %" : "—";
+      $("kpiOEESub").textContent = oee > 0 ? `A:${(availability*100).toFixed(1)}% × P:${(performance*100).toFixed(1)}% × Q:100%` : "—";
+
+      $("kpiAvail").textContent = availability > 0 ? (availability * 100).toFixed(1) + " %" : "—";
+      $("kpiAvailSub").textContent = `${runningHrs.toFixed(1)} hrs / ${(totalMin/60).toFixed(1)} hrs`;
+
+      $("kpiPerf").textContent = performance > 0 ? (performance * 100).toFixed(1) + " %" : "—";
+      $("kpiPerfSub").textContent = avgSpeed > 0 ? `${avgSpeed.toFixed(0)} / ${RATED_SPEED} m/min` : "—";
+
+      $("kpiQuality").textContent = "100 %";
+      $("kpiQualitySub").textContent = "Rejection assumed nil";
+
+      // ========== BLOCK 2: PRODUCTION ==========
+      $("kpiProd").textContent = totalProd.toFixed(2) + " MT";
+      $("kpiProdSub").textContent = `Days: ${daily.length}`;
+      $("kpiBestDay").textContent  = bestDay  ? `Best: ${bestDay.total_prod_mt.toFixed(1)} MT (${bestDay.date})` : "—";
+      $("kpiWorstDay").textContent = worstDay ? `Worst: ${worstDay.total_prod_mt.toFixed(1)} MT (${worstDay.date})` : "—";
+
+      $("kpiAvgProd").textContent = avgProd.toFixed(2);
+      $("kpiProjProd").textContent = `Projected: ${projectedProd.toFixed(1)} MT (${daysInMonth}d)`;
+      $("kpiExpProd").textContent = remainingDays > 0
+        ? `Expected: ${expectedProd.toFixed(1)} MT (${remainingDays}d left)`
+        : `Expected: ${totalProd.toFixed(1)} MT (month done)`;
+
+      $("kpiProdHr").textContent = prodPerHr > 0 ? prodPerHr.toFixed(2) : "—";
+      $("kpiCapEff").textContent = capEfficiency > 0 ? capEfficiency.toFixed(1) + " %" : "—";
+      $("kpiCapEffSub").textContent = capacityPerDay > 0
+        ? `${avgProd.toFixed(1)} / ${capacityPerDay.toFixed(1)} MT/day`
+        : "—";
+
+      // ========== BLOCK 3: MACHINE ==========
+      $("kpiSpeed").textContent = avgSpeed > 0 ? avgSpeed.toFixed(0) : "—";
+      $("kpiSpeedSub").textContent = avgSpeed > 0 ? `Rated: ${RATED_SPEED} m/min (${(performance*100).toFixed(1)}%)` : "—";
+
+      $("kpiHealth").textContent = healthIndex > 0 ? healthIndex.toFixed(1) : "—";
+      $("kpiHealthSub").textContent = healthIndex > 0
+        ? `Spd:${speedScore.toFixed(0)} Avl:${availScore.toFixed(0)} OEE:${oee.toFixed(0)}`
+        : "—";
+
+      $("kpiUtil").textContent = availability > 0 ? (availability * 100).toFixed(1) + " %" : "—";
+      $("kpiUtilSub").textContent = `${runningHrs.toFixed(1)} / ${(totalMin/60).toFixed(1)} hrs`;
+
+      // Average GSM
+      if(h22ForExp.length === 1){
+        $("kpiDailyAvg").textContent = h22ForExp[0].toFixed(2);
+        $("kpiDailyAvgSub").textContent = "1 day (exact H22)";
+      } else if(h22ForExp.length > 1){
+        $("kpiDailyAvg").textContent = avgGSM.toFixed(2);
+        $("kpiDailyAvgSub").textContent = `avg of ${h22ForExp.length} days`;
+      } else {
+        $("kpiDailyAvg").textContent = "—";
+        $("kpiDailyAvgSub").textContent = "no H22 data";
+      }
+
+      // ========== BLOCK 4: LOSS ANALYSIS ==========
+      $("kpiDown").textContent = (totalDownMin/60).toFixed(2) + " hrs";
+      $("kpiDownSub").textContent = `${totalDownMin.toFixed(0)} min total`;
+      $("kpiDownDay").textContent = `${downPerDay.toFixed(0)} min/day`;
+
+      $("kpiDownLoss").textContent  = downtimeLoss > 0 ? downtimeLoss.toFixed(1) + " MT" : "—";
+      $("kpiSpeedLoss").textContent = speedLoss > 0 ? speedLoss.toFixed(1) + " MT" : "—";
+      $("kpiTotalLoss").textContent = totalLoss > 0 ? totalLoss.toFixed(1) + " MT" : "—";
+      $("kpiLossPct").textContent   = lossPct > 0 ? `${lossPct.toFixed(1)}% of capacity (${totalCapacity.toFixed(1)} MT)` : "—";
+
+      // ========== BLOCK 5: PULP ==========
+      $("kpiPulp").textContent = totals.pulpTotal.toFixed(3);
+      $("kpiPulpPerMt").textContent = pulpPerMt > 0 ? `${pulpPerMt.toFixed(3)} MT/MT prod` : "—";
+      $("kpiHw").textContent = totals.hwTotal.toFixed(3);
+      $("kpiSw").textContent = totals.swTotal.toFixed(3);
+      const swPct = totalProd > 0 ? (totals.swTotal / totalProd) * 100 : 0;
+      $("kpiSwPct").textContent = swPct > 0 ? swPct.toFixed(2) + " %" : "—";
+      $("kpiSwPctSub").textContent = totalProd > 0
+        ? `${totals.swTotal.toFixed(3)} SW / ${totalProd.toFixed(2)} prod`
+        : "—";
+
+      // ========== BLOCK 6: CHEMICAL ==========
+      $("kpiChem").textContent = totals.chemTotal.toFixed(1);
+      $("kpiChemPerMt").textContent = chemPerMt.toFixed(2);
+      $("kpiPulpPerMtVal").textContent = pulpPerMt.toFixed(3);
+
+      // ========== BLOCK 7: UTILITY ==========
+      let steamTotal=0, gasTM=0, gasBoiler=0, waterTotal=0, powerTM=0, powerBoiler=0;
+      if(cons.ok && cons.itemDaily){
+        for(const r of cons.itemDaily){
+          if(r.type !== "utility") continue;
+          if(!inRange(r.date, totals._fromStr, totals._toStr)) continue;
+          const nm = r.item.toLowerCase();
+          if(nm.includes("steam"))                                    steamTotal += r.qty;
+          else if(nm.includes("gas") && nm.includes("boiler"))       gasBoiler += r.qty;
+          else if(nm.includes("gas"))                                 gasTM += r.qty;
+          else if(nm.includes("water"))                               waterTotal += r.qty;
+          else if(nm.includes("power") && nm.includes("boiler"))     powerBoiler += r.qty;
+          else if(nm.includes("power"))                               powerTM += r.qty;
+        }
+      }
+      const gasTotal = gasTM + gasBoiler;
+      const powerTotal = powerTM + powerBoiler;
+
+      $("kpiSteam").textContent = steamTotal > 0 ? steamTotal.toFixed(1) : "—";
+      $("kpiGas").textContent   = gasTotal > 0 ? gasTotal.toFixed(1) : "—";
+      $("kpiGasTM").textContent = `TM: ${gasTM.toFixed(1)} SCM`;
+      $("kpiGasBoiler").textContent = `Boiler: ${gasBoiler.toFixed(1)} SCM`;
+      $("kpiWater").textContent = waterTotal > 0 ? waterTotal.toFixed(1) : "—";
+      $("kpiPower").textContent = powerTotal > 0 ? powerTotal.toFixed(0) : "—";
+      $("kpiPowerTM").textContent = `Machine: ${powerTM.toFixed(0)} Units`;
+      $("kpiPowerBoiler").textContent = `Boiler+ETP: ${powerBoiler.toFixed(0)} Units`;
+      $("kpiSteamPerMt").textContent = totalProd > 0 && steamTotal > 0 ? `${(steamTotal / totalProd).toFixed(2)} MT/MT prod` : "—";
+      $("kpiGasPerMt").textContent   = totalProd > 0 && gasTotal > 0   ? `${(gasTotal / totalProd).toFixed(2)} SCM/MT prod` : "—";
+      $("kpiWaterPerMt").textContent = totalProd > 0 && waterTotal > 0 ? `${(waterTotal / totalProd).toFixed(2)} m³/MT prod` : "—";
+      $("kpiPowerPerMt").textContent = totalProd > 0 && powerTotal > 0 ? `${(powerTotal / totalProd).toFixed(0)} Units/MT prod` : "—";
+
+      // SEC card
+      const secPower = totalProd > 0 && powerTotal > 0 ? powerTotal / totalProd : 0;
+      $("kpiSEC").textContent = secPower > 0 ? secPower.toFixed(0) : "—";
+      $("kpiSECSub").textContent = totalProd > 0 && steamTotal > 0
+        ? `Steam: ${(steamTotal/totalProd).toFixed(2)} | Gas: ${(gasTotal/totalProd).toFixed(1)}`
+        : "Units / MT prod";
+    }
+
+    function updateDateInputs(){
+      if(!minDate || !maxDate) return;
+      $("dateFrom").min=minDate; $("dateFrom").max=maxDate;
+      $("dateTo").min=minDate; $("dateTo").max=maxDate;
+      if(!$("dateFrom").value) $("dateFrom").value=minDate;
+      if(!$("dateTo").value) $("dateTo").value=maxDate;
+      $("rangeInfo").textContent = `Data range: ${minDate} → ${maxDate}`;
+    }
+
+    function applyAll(){
+      if(!lineItems.length) return;
+      const fromStr = $("dateFrom").value || null;
+      const toStr = $("dateTo").value || null;
+
+      const filteredLine = lineItems.filter(r => inRange(r.date, fromStr, toStr));
+      const filteredDaily = dailySummary.filter(d => inRange(d.date, fromStr, toStr));
+      const useDaily = filteredDaily.length ? filteredDaily : dailySummary;
+
+      $("rangeInfo").textContent = `Selected: ${fromStr} → ${toStr} | Days: ${useDaily.length}`;
+
+      renderProduction(useDaily, fromStr, toStr);
+
+      renderQualityGsm(filteredLine.length ? filteredLine : lineItems);
+      renderDowntimeBar(deptTotalsSorted);
+      renderPreview(filteredLine.length ? filteredLine : lineItems);
+      renderEfficiency(useDaily);
+      renderSpeedTrend(useDaily, fromStr, toStr);
+      renderSwTrend(useDaily, fromStr, toStr);
+      renderSecTrend(useDaily, fromStr, toStr);
+      renderLossTree(useDaily, fromStr, toStr);
+
+      const totals = renderConsumption(fromStr, toStr);
+      const prodTotal = useDaily.reduce((a,b) => a + b.total_prod_mt, 0);
+      renderPulpGradeBar(fromStr, toStr);
+      renderChemGradeBar(fromStr, toStr);
+      renderChemPerTon(fromStr, toStr, prodTotal);
+      renderPackGradeBar(fromStr, toStr);
+      renderUtilityTable(fromStr, toStr);
+      renderConsumptionTable(fromStr, toStr);
+      totals._fromStr = fromStr;
+      totals._toStr = toStr;
+      renderKpis(useDaily, totals);
+      populateCompareControls();
+      renderBenchmarks();
+    }
+
+    $("dateFrom").addEventListener("change", applyAll);
+    $("dateTo").addEventListener("change", applyAll);
+
+    // ====== MONTH COMPARISON ======
+    function _mkKey(dateStr){ return dateStr ? dateStr.slice(0,7) : ""; }
+    function _mkLabel(key){
+      const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+      const [y,m]=key.split("-"); return M[parseInt(m,10)]+" "+y;
+    }
+    function getAvailableMonths(){
+      const s=new Set(); for(const d of dailySummary){ if(d.date) s.add(_mkKey(d.date)); } return [...s].sort();
+    }
+    function aggregateMonth(mk){
+      const days=dailySummary.filter(d=>_mkKey(d.date)===mk);
+      const dc=days.length||1;
+      const totalProd=days.reduce((s,d)=>s+d.total_prod_mt,0);
+      const totalDownMin=days.reduce((s,d)=>s+d.total_downtime_min,0);
+      let pulpTotal=0,hwTotal=0,swTotal=0,chemTotal=0;
+      let steamTotal=0,waterTotal=0,gasTotal=0,powerTotal=0;
+      if(cons.ok){
+        for(const r of (cons.pulpDaily||[])){ if(_mkKey(r.date)===mk) pulpTotal+=r.qty; }
+        for(const r of (cons.hwDaily||[])){ if(_mkKey(r.date)===mk) hwTotal+=r.qty; }
+        for(const r of (cons.swDaily||[])){ if(_mkKey(r.date)===mk) swTotal+=r.qty; }
+        if((hwTotal+swTotal)===0&&pulpTotal>0){
+          for(const r of (cons.itemDaily||[])){
+            if(r.type!=="pulp"||_mkKey(r.date)!==mk) continue;
+            const cls=pulpTypeFromName(r.item);
+            if(cls==="hard") hwTotal+=safeNum(r.qty); else if(cls==="soft") swTotal+=safeNum(r.qty);
+          }
+        }
+        for(const r of (cons.chemDaily||[])){ if(_mkKey(r.date)===mk) chemTotal+=r.qty; }
+        // Utility: Steam, Water, Gas, Power
+        for(const r of (cons.itemDaily||[])){
+          if(r.type!=="utility"||_mkKey(r.date)!==mk) continue;
+          const nm=r.item.toLowerCase();
+          if(nm.includes("steam")) steamTotal+=safeNum(r.qty);
+          else if(nm.includes("water")) waterTotal+=safeNum(r.qty);
+          else if(nm.includes("gas")) gasTotal+=safeNum(r.qty);
+          else if(nm.includes("power")) powerTotal+=safeNum(r.qty);
+        }
+      }
+      const swPct=totalProd>0?(swTotal/totalProd)*100:0;
+      // OEE calculation
+      const RS=1380, TW=2.85;
+      const totalMin=1440*dc, runMin=totalMin-totalDownMin;
+      const avail=totalMin>0?runMin/totalMin:0;
+      const h22=days.map(d=>dailyAvgMap.get(d.date)).filter(v=>v&&Number.isFinite(v));
+      const avgGSM=h22.length>0?h22.reduce((a,b)=>a+b,0)/h22.length:0;
+      const avgSpd=(runMin>0&&avgGSM>0)?(totalProd*1e6)/(runMin*TW*avgGSM):0;
+      const perf=RS>0?avgSpd/RS:0;
+      const oee=avail*perf*100;
+      // Quality-wise production, Dept-wise downtime & GSM count
+      const qMap=new Map(), deptMap=new Map(), gsmDayMap=new Map();
+      for(const li of lineItems){
+        if(_mkKey(li.date)!==mk) continue;
+        const mt=safeNum(li.prod_mt);
+        if(mt>0){
+          const q=li.quality||"NA"; qMap.set(q,(qMap.get(q)||0)+mt);
+          const g=li.gsm||"NA"; if(g!=="NA"){
+            if(!gsmDayMap.has(li.date)) gsmDayMap.set(li.date,new Set());
+            gsmDayMap.get(li.date).add(g);
+          }
+        }
+        const dm=safeNum(li.downtime_min);
+        if(dm>0){ const d=li.downtime_dept||"Unknown"; deptMap.set(d,(deptMap.get(d)||0)+dm); }
+      }
+      let totalGsmNos=0; gsmDayMap.forEach(s=>totalGsmNos+=s.size);
+      // Quality & GSM changes: count unique per day, sum across month
+      let totalQtyChanges=0, totalGsmChanges=0;
+      const qtyDayMap=new Map();
+      const qcDayLines=new Map();
+      for(const li of lineItems){
+        if(_mkKey(li.date)!==mk||safeNum(li.prod_mt)<=0) continue;
+        const q=li.quality||"NA";
+        if(!qtyDayMap.has(li.date)) qtyDayMap.set(li.date,new Set());
+        qtyDayMap.get(li.date).add(q);
+        if(!qcDayLines.has(li.date)) qcDayLines.set(li.date,[]);
+        qcDayLines.get(li.date).push(li);
+      }
+      qtyDayMap.forEach(s=>totalQtyChanges+=s.size);
+      qcDayLines.forEach(lines=>{
+        lines.sort((a,b)=>a.sn-b.sn);
+        for(let i=1;i<lines.length;i++){
+          if((lines[i].gsm||"NA")!==(lines[i-1].gsm||"NA")) totalGsmChanges++;
+        }
+      });
+      return {mk,label:_mkLabel(mk),dayCount:dc,totalProd,avgProdPerDay:totalProd/dc,
+        totalDownHrs:totalDownMin/60,avgDownPerDay:totalDownMin/dc,oee,avgGSM,totalGsmNos,totalQtyChanges,totalGsmChanges,
+        pulpTotal,hwTotal,swTotal,pulpPerMt:totalProd>0?pulpTotal/totalProd:0,
+        chemTotal,chemPerMt:totalProd>0?chemTotal/totalProd:0,
+        steamTotal,steamPerMt:totalProd>0?steamTotal/totalProd:0,
+        waterTotal,waterPerMt:totalProd>0?waterTotal/totalProd:0,
+        gasTotal,gasPerMt:totalProd>0?gasTotal/totalProd:0,
+        powerTotal,powerPerMt:totalProd>0?powerTotal/totalProd:0,
+        swPct,qualityMap:qMap,deptMap};
+    }
+    function _pctChange(base,cmp){ return(!cmp||cmp===0)?null:((base-cmp)/Math.abs(cmp))*100; }
+    function _minToHrMin(m){ if(!m||m<=0) return "—"; const h=Math.floor(m/60), mn=Math.round(m%60); return `${h}:${String(mn).padStart(2,'0')}`; }
+    function _fmtPct(pct,inv){
+      if(pct===null||pct===undefined) return '<span class="pct-neutral">N/A</span>';
+      const s=pct>0?"+":"", a=pct>0?"&#9650;":pct<0?"&#9660;":"&#8212;";
+      let c="pct-neutral";
+      if(Math.abs(pct)>0.5){ c=inv?(pct>0?"pct-down":"pct-up"):(pct>0?"pct-up":"pct-down"); }
+      return `<span class="${c}">${a} ${s}${pct.toFixed(1)}%</span>`;
+    }
+    function populateCompareControls(){
+      const months=getAvailableMonths(); const sel=$("cmpBaseMonth"); const ck=$("cmpCheckboxes");
+      sel.innerHTML=""; ck.innerHTML="";
+      if(!months.length){ sel.innerHTML='<option value="">No data</option>'; $("cmpStatus").textContent="Load Excel data first"; return; }
+      const toVal=$("dateTo").value; const curMk=toVal?_mkKey(toVal):months[months.length-1];
+      for(const mk of months){ const o=document.createElement("option"); o.value=mk; o.textContent=_mkLabel(mk); if(mk===curMk) o.selected=true; sel.appendChild(o); }
+      _updateCmpChecks();
+      sel.onchange=()=>{ _updateCmpChecks(); applyComparison(); };
+      // Auto-apply if previous month available
+      const others=months.filter(m=>m!==sel.value);
+      if(others.length) applyComparison();
+    }
+    function _updateCmpChecks(){
+      const months=getAvailableMonths(); const baseMk=$("cmpBaseMonth").value; const ck=$("cmpCheckboxes"); ck.innerHTML="";
+      // Find previous month relative to base
+      const sorted=months.filter(m=>m!==baseMk).sort();
+      const prevMonths=sorted.filter(m=>m<baseMk);
+      const prevMk=prevMonths.length?prevMonths[prevMonths.length-1]:null;
+      const others=sorted.reverse();
+      if(!others.length){ ck.innerHTML='<span style="color:var(--muted);font-size:12px">No other months available</span>'; return; }
+      others.forEach((mk)=>{
+        const lbl=document.createElement("label"); const cb=document.createElement("input");
+        cb.type="checkbox"; cb.value=mk; cb.name="cmpMonth";
+        if(mk===prevMk) cb.checked=true;
+        lbl.appendChild(cb); lbl.appendChild(document.createTextNode(" "+_mkLabel(mk))); ck.appendChild(lbl);
+      });
+    }
+    function renderComparisonTable(bd,cArr){
+      const kpis=[
+        {section:"Production",rows:[
+          {l:"Total Production (MT)",k:"totalProd",f:v=>v.toFixed(2),inv:false},
+          {l:"Avg Production/Day (MT)",k:"avgProdPerDay",f:v=>v.toFixed(2),inv:false},
+          {l:"OEE %",k:"oee",f:v=>v>0?v.toFixed(1)+" %":"—",inv:false},
+          {l:"Avg GSM",k:"avgGSM",f:v=>v>0?v.toFixed(1):"—",inv:false},
+          {l:"GSM Changes",k:"totalGsmNos",f:v=>v,inv:true},
+          {l:"Quality Changes",k:"totalQtyChanges",f:v=>v,inv:true},
+          {l:"Days in Data",k:"dayCount",f:v=>v,inv:false}
+        ]},
+        {section:"Downtime",rows:[
+          {l:"Total Downtime (hrs)",k:"totalDownHrs",f:v=>v.toFixed(1),inv:true},
+          {l:"Avg Downtime/Day (min)",k:"avgDownPerDay",f:v=>v.toFixed(0),inv:true}
+        ]},
+        {section:"Per Ton Consumption",rows:[
+          {l:"Pulp (MT/MT)",k:"pulpPerMt",f:v=>v.toFixed(3),inv:true},
+          {l:"Steam (MT/MT)",k:"steamPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Water (m³/MT)",k:"waterPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Gas (SCM/MT)",k:"gasPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Power (Units/MT)",k:"powerPerMt",f:v=>v.toFixed(0),inv:true},
+          {l:"Chemical (Kg/MT)",k:"chemPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Avg SW %",k:"swPct",f:v=>v.toFixed(2)+" %",inv:true}
+        ]}
+      ];
+      let h='<table class="compare-table"><thead><tr><th>KPI</th>';
+      h+=`<th class="num">${bd.label}<br><small>(Current)</small></th>`;
+      for(const c of cArr){ h+=`<th class="num">${c.label}<br><small>(Previous)</small></th><th class="num">Change %</th>`; }
+      h+='</tr></thead><tbody>';
+      for(const sec of kpis){
+        h+=`<tr class="section-row"><td colspan="${2+cArr.length*2}">${sec.section}</td></tr>`;
+        for(const r of sec.rows){
+          h+='<tr>'; h+=`<td>${r.l}</td><td class="num">${r.f(bd[r.k])}</td>`;
+          for(const c of cArr){ const p=_pctChange(bd[r.k],c[r.k]); h+=`<td class="num">${r.f(c[r.k])}</td><td class="num">${_fmtPct(p,r.inv)}</td>`; }
+          h+='</tr>';
+        }
+      }
+      // Quality-wise Production section
+      const allQ=new Set();
+      bd.qualityMap.forEach((_,q)=>allQ.add(q));
+      cArr.forEach(c=>c.qualityMap.forEach((_,q)=>allQ.add(q)));
+      const qKeys=[...allQ].sort();
+      const cols=2+cArr.length*2;
+      if(qKeys.length){
+        h+=`<tr class="section-row"><td colspan="${cols}">Quality-wise Production (MT)</td></tr>`;
+        for(const q of qKeys){
+          const bv=bd.qualityMap.get(q)||0;
+          h+=`<tr><td>${q}</td><td class="num">${bv>0?bv.toFixed(2):"—"}</td>`;
+          for(const c of cArr){
+            const cv=c.qualityMap.get(q)||0;
+            const p=_pctChange(bv,cv);
+            h+=`<td class="num">${cv>0?cv.toFixed(2):"—"}</td><td class="num">${_fmtPct(p,false)}</td>`;
+          }
+          h+='</tr>';
+        }
+        // Total row
+        const bqt=qKeys.reduce((s,q)=>s+(bd.qualityMap.get(q)||0),0);
+        h+=`<tr style="font-weight:900;border-top:2px solid #94a3b8"><td><b>Total</b></td><td class="num"><b>${bqt.toFixed(2)}</b></td>`;
+        for(const c of cArr){
+          const cqt=qKeys.reduce((s,q)=>s+(c.qualityMap.get(q)||0),0);
+          const p=_pctChange(bqt,cqt);
+          h+=`<td class="num"><b>${cqt.toFixed(2)}</b></td><td class="num">${_fmtPct(p,false)}</td>`;
+        }
+        h+='</tr>';
+      }
+      // Top Downtime Dept-wise section
+      const allDept=new Set();
+      bd.deptMap.forEach((_,d)=>allDept.add(d));
+      cArr.forEach(c=>c.deptMap.forEach((_,d)=>allDept.add(d)));
+      const deptKeys=[...allDept].sort((a,b)=>(bd.deptMap.get(b)||0)-(bd.deptMap.get(a)||0));
+      if(deptKeys.length){
+        h+=`<tr class="section-row"><td colspan="${cols}">Top Downtime by Department (Hr:Min)</td></tr>`;
+        for(const d of deptKeys){
+          const bv=bd.deptMap.get(d)||0;
+          h+=`<tr><td>${d}</td><td class="num">${_minToHrMin(bv)}</td>`;
+          for(const c of cArr){
+            const cv=c.deptMap.get(d)||0;
+            const p=_pctChange(bv,cv);
+            h+=`<td class="num">${_minToHrMin(cv)}</td><td class="num">${_fmtPct(p,true)}</td>`;
+          }
+          h+='</tr>';
+        }
+        // Total row
+        const bdt=deptKeys.reduce((s,d)=>s+(bd.deptMap.get(d)||0),0);
+        h+=`<tr style="font-weight:900;border-top:2px solid #94a3b8"><td><b>Total</b></td><td class="num"><b>${_minToHrMin(bdt)}</b></td>`;
+        for(const c of cArr){
+          const cdt=deptKeys.reduce((s,d)=>s+(c.deptMap.get(d)||0),0);
+          const p=_pctChange(bdt,cdt);
+          h+=`<td class="num"><b>${_minToHrMin(cdt)}</b></td><td class="num">${_fmtPct(p,true)}</td>`;
+        }
+        h+='</tr>';
+      }
+      h+='</tbody></table>'; $("cmpTableWrap").innerHTML=h;
+    }
+    function applyComparison(){
+      const baseMk=$("cmpBaseMonth").value;
+      if(!baseMk){ $("cmpStatus").textContent="No base month selected"; return; }
+      const checked=[...document.querySelectorAll('input[name="cmpMonth"]:checked')].map(cb=>cb.value);
+      if(!checked.length){ $("cmpStatus").textContent="Select at least one comparison month"; return; }
+      const bd=aggregateMonth(baseMk); const cArr=checked.map(mk=>aggregateMonth(mk));
+      $("cmpStatus").textContent=`Comparing ${bd.label} vs ${cArr.map(d=>d.label).join(", ")}`;
+      renderComparisonTable(bd,cArr);
+      // Sync benchmark tab: select base + checked comparison months
+      _syncBenchMonths(new Set([baseMk,...checked]));
+    }
+    function _syncBenchMonths(selectedSet){
+      const bck=$("benchMonthChecks");
+      if(!bck) return;
+      const cbs=bck.querySelectorAll('input[name="benchMonth"]');
+      if(!cbs.length){ renderBenchmarks(); }
+      bck.querySelectorAll('input[name="benchMonth"]').forEach(cb=>{
+        cb.checked=selectedSet.has(cb.value);
+      });
+      _renderBenchTable();
+    }
+    $("btnCompare").addEventListener("click",applyComparison);
+
+    // Load comparison month Excel files
+    $("cmpFileInput").addEventListener("change", async (e)=>{
+      const files = e.target.files;
+      if(!files||!files.length) return;
+      const status=$("cmpStatus");
+      const loaded=[];
+      for(const f of files){
+        status.textContent=`Loading ${f.name}...`;
+        try{
+          const buf=await f.arrayBuffer();
+          const wb=XLSX.read(buf,{type:"array",cellDates:true});
+          const ext=extractFromWorkbook(wb);
+          const yr=ext.by||2026, mo=ext.bm||1;
+          const cData=parsePulpChemicalConsumptionSheet(wb,yr,mo);
+          // Merge dailySummary (skip duplicate dates)
+          const existDates=new Set(dailySummary.map(d=>d.date));
+          for(const d of ext.daily){ if(!existDates.has(d.date)){ dailySummary.push(d); existDates.add(d.date); } }
+          // Fill missing days from consumption sheet MACHINE PRODUCTION row
+          if(cData.ok && cData.machProdDaily){
+            for(const mp of cData.machProdDaily){
+              if(!existDates.has(mp.date)){
+                dailySummary.push({date:mp.date, total_prod_mt:mp.qty, total_downtime_min:0});
+                existDates.add(mp.date);
+              }
+            }
+          }
+          // Merge dailyAvgMap (GSM for OEE)
+          if(ext.h22Map){ for(const [k,v] of ext.h22Map){ if(!dailyAvgMap.has(k)) dailyAvgMap.set(k,v); } }
+          // Merge lineItems (for quality-wise comparison)
+          if(ext.allLine){ for(const li of ext.allLine){ lineItems.push(li); } }
+          // Merge consumption arrays
+          if(cData.ok){
+            const mergeArr=(target,src)=>{
+              if(!src||!src.length) return;
+              const key=d=>d.date+"|"+d.item+"|"+d.qty;
+              const exist=new Set((target||[]).map(key));
+              for(const r of src){ if(!exist.has(key(r))){ target.push(r); exist.add(key(r)); } }
+            };
+            if(!cons.ok){ cons={ok:true,pulpDaily:[],chemDaily:[],itemDaily:[],hwDaily:[],swDaily:[],finProdDaily:[]}; }
+            mergeArr(cons.pulpDaily,cData.pulpDaily);
+            mergeArr(cons.chemDaily,cData.chemDaily);
+            mergeArr(cons.itemDaily,cData.itemDaily);
+            mergeArr(cons.hwDaily,cData.hwDaily);
+            mergeArr(cons.swDaily,cData.swDaily);
+            mergeArr(cons.finProdDaily,cData.finProdDaily);
+          }
+          // Track what was loaded
+          const mk=ext.daily.length?_mkKey(ext.daily[0].date):(yr+"-"+String(mo).padStart(2,"0"));
+          loaded.push(_mkLabel(mk));
+        }catch(err){ status.textContent=`Error loading ${f.name}: ${err.message}`; console.error(err); }
+      }
+      if(loaded.length){
+        status.textContent=`Loaded: ${loaded.join(", ")}`;
+        populateCompareControls();
+        renderBenchmarks();
+        _saveToCache();
+      }
+      e.target.value=""; // reset so same file can be re-selected
+    });
+
+    // Print Comparison Report
+    $("btnCmpPrint").addEventListener("click",()=>{
+      const baseMk=$("cmpBaseMonth").value;
+      if(!baseMk){ alert("Apply comparison first"); return; }
+      const checked=[...document.querySelectorAll('input[name="cmpMonth"]:checked')].map(cb=>cb.value);
+      if(!checked.length){ alert("Apply comparison first"); return; }
+      const bd=aggregateMonth(baseMk);
+      const cSorted=[...checked].sort().reverse(); // newest first (descending)
+      const cArr=cSorted.map(mk=>aggregateMonth(mk));
+      const all=[bd,...cArr];
+      // Change % = Base (first column) vs Last (oldest/last column)
+      const lastData=cArr[cArr.length-1];
+      // Short month label: "Feb-26"
+      function _shortLbl(key){ const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; const [y,m]=key.split("-"); return M[parseInt(m,10)]+"-"+y.slice(2); }
+      const kpis=[
+        {section:"Production",rows:[
+          {l:"Total Production (MT)",k:"totalProd",f:v=>Math.round(v),inv:false},
+          {l:"Avg Production/Day (MT)",k:"avgProdPerDay",f:v=>v.toFixed(2),inv:false},
+          {l:"OEE %",k:"oee",f:v=>v>0?v.toFixed(2)+"%":"—",inv:false},
+          {l:"Avg GSM",k:"avgGSM",f:v=>v>0?v.toFixed(1):"—",inv:false},
+          {l:"GSM Changes",k:"totalGsmNos",f:v=>v,inv:true},
+          {l:"Quality Changes",k:"totalQtyChanges",f:v=>v,inv:true},
+          {l:"Days in Data",k:"dayCount",f:v=>v,inv:false}
+        ]},
+        {section:"Downtime",rows:[
+          {l:"Total Downtime (hrs)",k:"totalDownHrs",f:v=>v.toFixed(1),inv:true},
+          {l:"Avg Downtime/Day (min)",k:"avgDownPerDay",f:v=>v.toFixed(0),inv:true}
+        ]},
+        {section:"Per Ton\nConsumption",rows:[
+          {l:"Pulp (MT/MT)",k:"pulpPerMt",f:v=>v.toFixed(3),inv:true},
+          {l:"Steam (MT/MT)",k:"steamPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Water (m\u00B3/MT)",k:"waterPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Gas (SCM/MT)",k:"gasPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Power (Units/MT)",k:"powerPerMt",f:v=>v.toFixed(0),inv:true},
+          {l:"Chemical (Kg/MT)",k:"chemPerMt",f:v=>v.toFixed(2),inv:true},
+          {l:"Avg SW %",k:"swPct",f:v=>v.toFixed(2)+"%",inv:true}
+        ]}
+      ];
+      // Quality-wise Production
+      const allQ=new Set();
+      all.forEach(d=>d.qualityMap.forEach((_,q)=>allQ.add(q)));
+      const qKeys=[...allQ].sort();
+      // Dept-wise Downtime
+      const allDept=new Set();
+      all.forEach(d=>d.deptMap.forEach((_,dp)=>allDept.add(dp)));
+      const deptKeys=[...allDept].sort((a,b)=>(bd.deptMap.get(b)||0)-(bd.deptMap.get(a)||0));
+      const mc=all.length; // month count
+      // Build table
+      let h='<table><thead><tr><th></th><th>KPI</th>';
+      for(const d of all) h+=`<th>${_shortLbl(d.mk)}</th>`;
+      h+='<th>Change %</th></tr></thead><tbody>';
+      // Sections with rowspan
+      for(const sec of kpis){
+        const rc=sec.rows.length;
+        sec.rows.forEach((r,i)=>{
+          h+='<tr>';
+          if(i===0) h+=`<td class="sec" rowspan="${rc}">${sec.section.replace(/\n/g,'<br>')}</td>`;
+          h+=`<td class="kpi">${r.l}</td>`;
+          for(const d of all) h+=`<td class="num">${r.f(d[r.k])}</td>`;
+          const p=_pctChange(bd[r.k],lastData[r.k]);
+          h+=`<td class="chg">${_fmtPct(p,r.inv)}</td>`;
+          h+='</tr>';
+        });
+      }
+      // Quality-wise Production with rowspan (include Total row)
+      if(qKeys.length){
+        const qrc=qKeys.length+1; // +1 for Total row
+        qKeys.forEach((q,i)=>{
+          h+='<tr>';
+          if(i===0) h+=`<td class="sec" rowspan="${qrc}">Quality-<br>wise<br>Production<br>(MT)</td>`;
+          h+=`<td class="kpi">${q}</td>`;
+          for(const d of all){ const v=d.qualityMap.get(q)||0; h+=`<td class="num">${v>0?v.toFixed(1):"—"}</td>`; }
+          const bv=bd.qualityMap.get(q)||0, cv=lastData.qualityMap.get(q)||0;
+          const p=_pctChange(bv,cv);
+          h+=`<td class="chg">${_fmtPct(p,false)}</td>`;
+          h+='</tr>';
+        });
+        // Total row
+        h+='<tr><td class="kpi" style="font-weight:900">Total</td>';
+        for(const d of all){ const t=qKeys.reduce((s,q)=>s+(d.qualityMap.get(q)||0),0); h+=`<td class="num" style="font-weight:900">${t.toFixed(1)}</td>`; }
+        const bqt=qKeys.reduce((s,q)=>s+(bd.qualityMap.get(q)||0),0), cqt=qKeys.reduce((s,q)=>s+(lastData.qualityMap.get(q)||0),0);
+        h+=`<td class="chg">${_fmtPct(_pctChange(bqt,cqt),false)}</td></tr>`;
+      }
+      // Dept-wise Downtime with rowspan (include Total row)
+      if(deptKeys.length){
+        const drc=deptKeys.length+1; // +1 for Total row
+        deptKeys.forEach((d,i)=>{
+          h+='<tr>';
+          if(i===0) h+=`<td class="sec" rowspan="${drc}">Top<br>Downtime<br>by<br>Depart-<br>ment<br>(Hr:Min)</td>`;
+          h+=`<td class="kpi">${d}</td>`;
+          for(const m of all){ const v=m.deptMap.get(d)||0; h+=`<td class="num">${_minToHrMin(v)}</td>`; }
+          const bv=bd.deptMap.get(d)||0, cv=lastData.deptMap.get(d)||0;
+          const p=_pctChange(bv,cv);
+          h+=`<td class="chg">${_fmtPct(p,true)}</td>`;
+          h+='</tr>';
+        });
+        // Total row
+        h+='<tr><td class="kpi" style="font-weight:900">Total</td>';
+        for(const m of all){ const t=deptKeys.reduce((s,d)=>s+(m.deptMap.get(d)||0),0); h+=`<td class="num" style="font-weight:900">${_minToHrMin(t)}</td>`; }
+        const bdt=deptKeys.reduce((s,d)=>s+(bd.deptMap.get(d)||0),0), cdt=deptKeys.reduce((s,d)=>s+(lastData.deptMap.get(d)||0),0);
+        h+=`<td class="chg">${_fmtPct(_pctChange(bdt,cdt),true)}</td></tr>`;
+      }
+      h+='</tbody></table>';
+      const win=window.open("","_blank");
+      win.document.write(`<!DOCTYPE html><html><head><title>Key Performance Comparative Analysis</title>
+<style>
+  @page { size:A4 landscape; margin:6mm 5mm; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ font-family:'Segoe UI',Arial,sans-serif; font-size:10px; color:#000; font-weight:600; line-height:1.2; }
+  h1{ text-align:center; font-size:16px; font-weight:900; padding:6px 0 8px; margin:0; }
+  table{ width:100%; border-collapse:collapse; font-size:9px; border:2px solid #000; }
+  th{ padding:4px 5px; font-size:9px; text-align:center; background:#f1f5f9; font-weight:900; color:#000; border:1px solid #000; }
+  td{ padding:3px 5px; border:1px solid #000; font-weight:600; color:#000; }
+  .sec{ background:#c6efce; color:#006100; font-weight:900; font-size:9px; text-align:center; vertical-align:middle; width:70px; min-width:70px; max-width:80px; }
+  .kpi{ text-align:left; white-space:nowrap; font-weight:700; }
+  .num{ text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .chg{ text-align:center; white-space:nowrap; font-weight:700; }
+  .pct-up{ color:#16a34a; font-weight:800; }
+  .pct-down{ color:#ef4444; font-weight:800; }
+  .pct-neutral{ color:#64748b; font-weight:600; }
+  @media print{ body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; } }
+</style></head><body>
+<h1>Key Performance Comparative Analysis( Month Wise)</h1>
+${h}
+</body></html>`);
+      win.document.close();
+      setTimeout(()=>win.print(),400);
+    });
+
+    // ====== BENCHMARKS ======
+    function renderBenchmarks(){
+      if(!lineItems.length || !cons.ok){ $("benchTableWrap").innerHTML="<div class='warnBox'>Load data with consumption sheet to see benchmarks.</div>"; return; }
+      // 1. Build quality-per-day map (only prod > 0)
+      const qDayMap=new Map();
+      for(const li of lineItems){
+        if(safeNum(li.prod_mt)<=0) continue;
+        const q=li.quality||"NA";
+        if(!qDayMap.has(li.date)) qDayMap.set(li.date,new Set());
+        qDayMap.get(li.date).add(q);
+      }
+      // 2. Single-quality days only
+      const singleDays=[];
+      for(const [date,qs] of qDayMap){ if(qs.size===1) singleDays.push({date,quality:[...qs][0]}); }
+      if(!singleDays.length){ $("benchTableWrap").innerHTML="<div class='warnBox'>No single-quality full-day runs found.</div>"; return; }
+      // 3. Daily utility & chemical maps (Gas & Power EXCLUDE boiler/ETP for benchmarks)
+      const chemDay=new Map(),gasDay=new Map(),waterDay=new Map(),powerDay=new Map(),steamDay=new Map();
+      for(const r of (cons.itemDaily||[])){
+        if(r.type==="utility"){
+          const nm=r.item.toLowerCase();
+          if(nm.includes("steam")) steamDay.set(r.date,(steamDay.get(r.date)||0)+safeNum(r.qty));
+          else if(nm.includes("gas") && nm.includes("boiler")) { /* exclude boiler gas */ }
+          else if(nm.includes("gas")) gasDay.set(r.date,(gasDay.get(r.date)||0)+safeNum(r.qty));
+          else if(nm.includes("water")) waterDay.set(r.date,(waterDay.get(r.date)||0)+safeNum(r.qty));
+          else if(nm.includes("power") && (nm.includes("boiler")||nm.includes("etp"))) { /* exclude boiler+ETP power */ }
+          else if(nm.includes("power")) powerDay.set(r.date,(powerDay.get(r.date)||0)+safeNum(r.qty));
+        }else if(r.type==="chemical"){
+          chemDay.set(r.date,(chemDay.get(r.date)||0)+safeNum(r.qty));
+        }
+      }
+      // 4. Daily production map & average GSM per date
+      const prodDay=new Map();
+      for(const d of dailySummary) prodDay.set(d.date,d.total_prod_mt);
+      const gsmDayMap=new Map(); // date → {sum, count}
+      for(const li of lineItems){
+        if(safeNum(li.prod_mt)<=0) continue;
+        const g=parseFloat(li.gsm);
+        if(!g||g<=0) continue;
+        if(!gsmDayMap.has(li.date)) gsmDayMap.set(li.date,{sum:0,count:0});
+        const e=gsmDayMap.get(li.date); e.sum+=g; e.count++;
+      }
+      // 5. Compute per-ton for each single-quality day
+      const records=[];
+      for(const sd of singleDays){
+        const p=prodDay.get(sd.date)||0;
+        if(p<=0) continue;
+        const gd=gsmDayMap.get(sd.date);
+        const avgGsm=gd&&gd.count>0?gd.sum/gd.count:0;
+        records.push({
+          date:sd.date, quality:sd.quality, month:_mkKey(sd.date), prod:p, avgGsm,
+          chem:(chemDay.get(sd.date)||0)/p,
+          gas:(gasDay.get(sd.date)||0)/p,
+          water:(waterDay.get(sd.date)||0)/p,
+          power:(powerDay.get(sd.date)||0)/p,
+          steam:(steamDay.get(sd.date)||0)/p
+        });
+      }
+      // 6. Month selection checkboxes — show ALL loaded months
+      const allMonths=getAvailableMonths().slice().reverse(); // newest first
+      const bck=$("benchMonthChecks");
+      const prevSel=new Set([...bck.querySelectorAll("input:checked")].map(c=>c.value));
+      bck.innerHTML="";
+      allMonths.forEach(mk=>{
+        const lbl=document.createElement("label"); const cb=document.createElement("input");
+        cb.type="checkbox"; cb.value=mk; cb.name="benchMonth";
+        cb.checked= prevSel.size? prevSel.has(mk) : true;
+        cb.onchange=()=>_renderBenchTable();
+        lbl.appendChild(cb); lbl.appendChild(document.createTextNode(" "+_mkLabel(mk))); bck.appendChild(lbl);
+      });
+      _benchRecords=records;
+      _renderBenchTable();
+    }
+    let _benchRecords=[];
+    function _renderBenchTable(){
+      const records=_benchRecords;
+      if(!records.length) return;
+      const checkedMonths=new Set([...$("benchMonthChecks").querySelectorAll("input:checked")].map(c=>c.value));
+      if(!checkedMonths.size){ $("benchTableWrap").innerHTML="<div class='warnBox'>Select at least one month.</div>"; return; }
+      const filtered=records.filter(r=>checkedMonths.has(r.month));
+      if(!filtered.length){ $("benchTableWrap").innerHTML="<div class='warnBox'>No data for selected months.</div>"; return; }
+      const months=[...checkedMonths].sort().reverse();
+      const params=[
+        {key:"chem",label:"Chemical (kg/ton)",f:v=>v.toFixed(2)},
+        {key:"steam",label:"Steam (MT/ton)",f:v=>v.toFixed(2)},
+        {key:"gas",label:"Gas (SCM/ton)",f:v=>v.toFixed(2)},
+        {key:"water",label:"Water (m\u00B3/ton)",f:v=>v.toFixed(2)},
+        {key:"power",label:"Power (Units/ton)",f:v=>v.toFixed(0)}
+      ];
+      function fmtDate(d){
+        const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+        const [y,m,dd]=d.split("-");
+        return `${parseInt(dd)}-${M[parseInt(m)]}-${y.slice(2)}`;
+      }
+      function shortLbl(key){ const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; const [y,m]=key.split("-"); return M[parseInt(m,10)]+"-"+y.slice(2); }
+      // Collect all qualities across all selected months
+      const allQualities=[...new Set(filtered.map(r=>r.quality))].sort();
+      // Pre-compute best/highest per month×quality×param with day production & avgGsm
+      const benchMap=new Map();
+      const recByDate=new Map();
+      for(const r of filtered) recByDate.set(r.date, r);
+      for(const mk of months){
+        for(const q of allQualities){
+          const qRecs=filtered.filter(r=>r.month===mk&&r.quality===q);
+          for(const pm of params){
+            let best=Infinity,bestDate="",high=-Infinity,highDate="";
+            for(const r of qRecs){
+              const v=r[pm.key];
+              if(v>0&&v<best){best=v;bestDate=r.date;}
+              if(v>0&&v>high){high=v;highDate=r.date;}
+            }
+            const br=recByDate.get(bestDate), hr=recByDate.get(highDate);
+            benchMap.set(`${mk}|${q}|${pm.key}`,{best,bestDate,bestProd:br?br.prod:0,bestGsm:br?br.avgGsm:0,high,highDate,highProd:hr?hr.prod:0,highGsm:hr?hr.avgGsm:0});
+          }
+        }
+      }
+      const th='border:1px solid #cbd5e1;padding:6px;background:#f1f5f9;text-align:center;font-weight:700';
+      const td='border:1px solid #cbd5e1;padding:5px;text-align:center';
+      // Header row 1: Quality | Parameter | Month colspan=2 ...
+      let h='<table style="width:100%;border-collapse:collapse;font-size:12px">';
+      h+='<thead><tr>';
+      h+=`<th rowspan="2" style="${th}">Quality</th>`;
+      h+=`<th rowspan="2" style="${th}">Parameter</th>`;
+      for(const mk of months) h+=`<th colspan="2" style="${th}">${shortLbl(mk)}</th>`;
+      h+='</tr><tr>';
+      for(const mk of months){
+        h+=`<th style="${th};color:#16a34a;font-size:11px">Best</th>`;
+        h+=`<th style="${th};color:#ef4444;font-size:11px">Highest</th>`;
+      }
+      h+='</tr></thead><tbody>';
+      // Data rows: Quality (rowspan) | param rows with prod in each cell
+      for(const q of allQualities){
+        let qFirst=true;
+        for(const pm of params){
+          h+='<tr>';
+          if(qFirst){ h+=`<td rowspan="${params.length}" style="${td};font-weight:700;vertical-align:middle;background:#f8fafc">${q}</td>`; qFirst=false; }
+          h+=`<td style="${td};text-align:left;white-space:nowrap">${pm.label}</td>`;
+          for(const mk of months){
+            const bm=benchMap.get(`${mk}|${q}|${pm.key}`);
+            if(bm&&bm.best!==Infinity){
+              h+=`<td style="${td};color:#16a34a;font-weight:600"><div>${pm.f(bm.best)}</div><div style="font-size:10px;color:#64748b;font-weight:400">${fmtDate(bm.bestDate)}</div><div style="font-size:10px;color:#0ea5e9;font-weight:400">Prod: ${Math.round(bm.bestProd)} MT${bm.bestGsm>0?' | GSM: '+bm.bestGsm.toFixed(1):''}</div></td>`;
+            }else{ h+=`<td style="${td};color:#94a3b8">N/A</td>`; }
+            if(bm&&bm.high!==-Infinity){
+              h+=`<td style="${td};color:#ef4444;font-weight:600"><div>${pm.f(bm.high)}</div><div style="font-size:10px;color:#64748b;font-weight:400">${fmtDate(bm.highDate)}</div><div style="font-size:10px;color:#0ea5e9;font-weight:400">Prod: ${Math.round(bm.highProd)} MT${bm.highGsm>0?' | GSM: '+bm.highGsm.toFixed(1):''}</div></td>`;
+            }else{ h+=`<td style="${td};color:#94a3b8">N/A</td>`; }
+          }
+          h+='</tr>';
+        }
+      }
+      h+='</tbody></table>';
+      $("benchTableWrap").innerHTML=h;
+    }
+
+    // ====== BENCHMARK PRINT ======
+    $("btnBenchPrint").addEventListener("click",()=>{
+      const records=_benchRecords;
+      if(!records.length){ alert("No benchmark data available."); return; }
+      const checkedMonths=new Set([...$("benchMonthChecks").querySelectorAll("input:checked")].map(c=>c.value));
+      if(!checkedMonths.size){ alert("Select at least one month."); return; }
+      const filtered=records.filter(r=>checkedMonths.has(r.month));
+      if(!filtered.length){ alert("No data for selected months."); return; }
+      const allMonths=[...checkedMonths].sort().reverse();
+      const params=[
+        {key:"chem",label:"Chemical (kg/ton)",f:v=>v.toFixed(2)},
+        {key:"steam",label:"Steam (MT/ton)",f:v=>v.toFixed(2)},
+        {key:"gas",label:"Gas (SCM/ton)",f:v=>v.toFixed(2)},
+        {key:"water",label:"Water (m\u00B3/ton)",f:v=>v.toFixed(2)},
+        {key:"power",label:"Power (Units/ton)",f:v=>v.toFixed(0)}
+      ];
+      function fmtD(d){ const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; const [y,m,dd]=d.split("-"); return `${parseInt(dd)}-${M[parseInt(m)]}-${y.slice(2)}`; }
+      function sLbl(key){ const M=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; const [y,m]=key.split("-"); return M[parseInt(m,10)]+"-"+y.slice(2); }
+      const allQualities=[...new Set(filtered.map(r=>r.quality))].sort();
+      // Pre-compute benchMap
+      const recByDate=new Map();
+      for(const r of filtered) recByDate.set(r.date, r);
+      const benchMap=new Map();
+      for(const mk of allMonths){
+        for(const q of allQualities){
+          const qRecs=filtered.filter(r=>r.month===mk&&r.quality===q);
+          for(const pm of params){
+            let best=Infinity,bestDate="",high=-Infinity,highDate="";
+            for(const r of qRecs){ const v=r[pm.key]; if(v>0&&v<best){best=v;bestDate=r.date;} if(v>0&&v>high){high=v;highDate=r.date;} }
+            const br=recByDate.get(bestDate),hr=recByDate.get(highDate);
+            benchMap.set(`${mk}|${q}|${pm.key}`,{best,bestDate,bestProd:br?br.prod:0,bestGsm:br?br.avgGsm:0,high,highDate,highProd:hr?hr.prod:0,highGsm:hr?hr.avgGsm:0});
+          }
+        }
+      }
+      // Helper: check if a month has any valid data for a quality
+      function hasData(mk,q){ return params.some(pm=>{ const bm=benchMap.get(`${mk}|${q}|${pm.key}`); return bm&&(bm.best!==Infinity||bm.high!==-Infinity); }); }
+      // Helper: build one table for a chunk of months
+      function buildTable(chunk,q){
+        const thS='border:1.5px solid #000;padding:7px 10px;background:#e2e8f0;text-align:center;font-weight:700;font-size:11px';
+        const tdS='border:1.5px solid #000;padding:6px 8px;text-align:center;font-size:11px';
+        let t='<table style="width:100%;border-collapse:collapse;margin-top:10px">';
+        t+='<thead><tr>';
+        t+=`<th rowspan="2" style="${thS};width:140px">Parameter</th>`;
+        for(const mk of chunk) t+=`<th colspan="4" style="${thS}">${sLbl(mk)}</th>`;
+        t+='</tr><tr>';
+        for(const mk of chunk){
+          t+=`<th style="${thS};color:#16a34a;font-size:10px">Best</th>`;
+          t+=`<th style="${thS};font-size:10px">Date</th>`;
+          t+=`<th style="${thS};color:#ef4444;font-size:10px">Highest</th>`;
+          t+=`<th style="${thS};font-size:10px">Date</th>`;
+        }
+        t+='</tr></thead><tbody>';
+        for(const pm of params){
+          t+='<tr>';
+          t+=`<td style="${tdS};text-align:left;font-weight:600;white-space:nowrap">${pm.label}</td>`;
+          for(const mk of chunk){
+            const bm=benchMap.get(`${mk}|${q}|${pm.key}`);
+            if(bm&&bm.best!==Infinity){
+              t+=`<td style="${tdS};color:#16a34a;font-weight:700">${pm.f(bm.best)}<div style="font-size:9px;color:#0284c7;font-weight:400">Prod: ${Math.round(bm.bestProd)} MT${bm.bestGsm>0?' | GSM: '+bm.bestGsm.toFixed(1):''}</div></td>`;
+              t+=`<td style="${tdS};font-size:10px">${fmtD(bm.bestDate)}</td>`;
+            }else{ t+=`<td style="${tdS};color:#999">—</td><td style="${tdS}">—</td>`; }
+            if(bm&&bm.high!==-Infinity){
+              t+=`<td style="${tdS};color:#ef4444;font-weight:700">${pm.f(bm.high)}<div style="font-size:9px;color:#0284c7;font-weight:400">Prod: ${Math.round(bm.highProd)} MT${bm.highGsm>0?' | GSM: '+bm.highGsm.toFixed(1):''}</div></td>`;
+              t+=`<td style="${tdS};font-size:10px">${fmtD(bm.highDate)}</td>`;
+            }else{ t+=`<td style="${tdS};color:#999">—</td><td style="${tdS}">—</td>`; }
+          }
+          t+='</tr>';
+        }
+        t+='</tbody></table>';
+        return t;
+      }
+      const today=new Date(); const reportDate=`${String(today.getDate()).padStart(2,'0')}-${["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][today.getMonth()]}-${today.getFullYear()}`;
+      const CHUNK=4;
+      // Helper: build overall best banner for a quality (across all months)
+      function buildBestBanner(q){
+        const qRecs=filtered.filter(r=>r.quality===q);
+        if(!qRecs.length) return '';
+        let items=[];
+        for(const pm of params){
+          let best=Infinity,bestDate="",bestProd=0,bestGsm=0;
+          for(const r of qRecs){ const v=r[pm.key]; if(v>0&&v<best){best=v;bestDate=r.date;bestProd=r.prod;bestGsm=r.avgGsm||0;} }
+          if(best!==Infinity){
+            const lbl=pm.label.split("(")[0].trim();
+            const gsmStr=bestGsm>0?' | GSM: '+bestGsm.toFixed(1):'';
+            items.push(`<span style="margin:0 10px"><strong>${lbl}</strong> = <span style="color:#16a34a;font-weight:700">${pm.f(best)}</span> <span style="color:#555">${fmtD(bestDate)}</span> <span style="color:#0284c7;font-size:10px">(Prod: ${Math.round(bestProd)} MT${gsmStr})</span></span>`);
+          }
+        }
+        if(!items.length) return '';
+        return `<div style="background:#f0fdf4;border:1.5px solid #16a34a;border-radius:6px;padding:8px 12px;margin:6px 0 4px 0;text-align:center;font-size:11px">
+<div style="font-weight:700;font-size:12px;color:#16a34a;margin-bottom:4px">Overall Best Benchmark Records</div>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:4px 6px">${items.join('')}</div>
+</div>`;
+      }
+      // Build one page per quality
+      let pages='';
+      for(const q of allQualities){
+        // Filter months that have data for this quality (exclude N/A months)
+        const qMonths=allMonths.filter(mk=>hasData(mk,q));
+        if(!qMonths.length) continue;
+        const banner=buildBestBanner(q);
+        // Split into chunks of 4
+        let tables='';
+        for(let i=0;i<qMonths.length;i+=CHUNK){
+          tables+=buildTable(qMonths.slice(i,i+CHUNK),q);
+        }
+        pages+=`<div class="bench-page">
+<h1 style="text-align:center;font-size:18px;margin:0 0 4px 0;font-family:Arial,sans-serif">GSTPL BENCHMARK REPORT</h1>
+<div style="text-align:center;font-size:13px;margin-bottom:2px"><strong>Grade: ${q}</strong></div>
+<div style="text-align:center;font-size:11px;color:#555;margin-bottom:2px">Date: ${reportDate} &nbsp;|&nbsp; Single-Quality Days Only</div>
+${banner}
+${tables}
+</div>`;
+      }
+      if(!pages){ alert("No valid benchmark data to print."); return; }
+      const win=window.open("","_blank");
+      win.document.write(`<!DOCTYPE html><html><head><title>GSTPL Benchmark Report</title>
+<style>
+  @page{ size:A4 landscape; margin:10mm 10mm; }
+  *{ box-sizing:border-box; }
+  body{ font-family:Arial,Helvetica,sans-serif; margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .bench-page{ page-break-after:always; padding:4px 0; }
+  .bench-page:last-child{ page-break-after:auto; }
+  table{ table-layout:auto; }
+  @media print{
+    body{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .bench-page{ page-break-after:always; }
+    .bench-page:last-child{ page-break-after:auto; }
+  }
+</style></head><body>${pages}</body></html>`);
+      win.document.close();
+      setTimeout(()=>win.print(),400);
+    });
+
+    // ====== END MONTH COMPARISON ======
+
+    $("btnSummary").addEventListener("click", ()=>{
+      const f = $("dateFrom").value || "—";
+      const t = $("dateTo").value || "—";
+      const g = (id) => { const el = $(id); return el ? el.textContent.trim() : "—"; };
+      const s = (id) => { const el = $(id); return el ? el.textContent.trim() : ""; };
+
+      // Today date
+      const today = t !== "—" ? t : f;
+
+      // Collect top downtime departments: Today & Todate
+      const deptTodayMap = new Map(), deptTodateMap = new Map();
+      for(const li of lineItems){
+        if(!li.downtime_dept || !li.downtime_min) continue;
+        const dm = li.downtime_min || 0;
+        if(dm <= 0) continue;
+        if(inRange(li.date, f, t)) deptTodateMap.set(li.downtime_dept, (deptTodateMap.get(li.downtime_dept)||0) + dm);
+        if(li.date === today) deptTodayMap.set(li.downtime_dept, (deptTodayMap.get(li.downtime_dept)||0) + dm);
+      }
+      const deptKeys = [...deptTodateMap.entries()].filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k])=>k);
+      const deptRows = deptKeys.map(d=>{
+        const td = deptTodayMap.get(d)||0;
+        const tot = deptTodateMap.get(d)||0;
+        return `<tr><td>${d}</td><td style="text-align:right">${td > 0 ? td.toFixed(0) : "—"}</td><td style="text-align:right">${tot.toFixed(0)}</td></tr>`;
+      }).join("");
+
+      // Quality-wise production: Today & Todate
+      const qToday = new Map(), qTodate = new Map();
+      for(const li of lineItems){
+        const q = li.quality || "NA";
+        const mt = safeNum(li.prod_mt);
+        if(mt <= 0) continue;
+        if(inRange(li.date, f, t)) qTodate.set(q, (qTodate.get(q)||0) + mt);
+        if(li.date === today) qToday.set(q, (qToday.get(q)||0) + mt);
+      }
+      const qualityKeys = [...new Set([...qTodate.keys()])].sort();
+      let qualityRows = "";
+      let qTodayTotal = 0, qTodateTotal = 0;
+      for(const q of qualityKeys){
+        const td = qToday.get(q)||0;
+        const tot = qTodate.get(q)||0;
+        qTodayTotal += td; qTodateTotal += tot;
+        qualityRows += `<tr><td>${q}</td><td style="text-align:right">${td > 0 ? td.toFixed(2) : "—"}</td><td style="text-align:right">${tot.toFixed(2)}</td></tr>`;
+      }
+      qualityRows += `<tr style="font-weight:700;border-top:2px solid #cbd5e1"><td>Total</td><td style="text-align:right">${qTodayTotal.toFixed(2)}</td><td style="text-align:right">${qTodateTotal.toFixed(2)}</td></tr>`;
+
+      // Pulp grade-wise consumption: Today & Todate
+      const pToday = new Map(), pTodate = new Map();
+      if(cons.ok && cons.itemDaily){
+        for(const r of cons.itemDaily){
+          if(r.type !== "pulp") continue;
+          if(inRange(r.date, f, t)) pTodate.set(r.item, (pTodate.get(r.item)||0) + r.qty);
+          if(r.date === today) pToday.set(r.item, (pToday.get(r.item)||0) + r.qty);
+        }
+      }
+      const pulpKeys = [...new Set([...pTodate.keys()])].sort();
+      let pulpRows = "";
+      let pTodayTotal = 0, pTodateTotal = 0;
+      for(const p of pulpKeys){
+        const td = pToday.get(p)||0;
+        const tot = pTodate.get(p)||0;
+        if(tot <= 0) continue;
+        pTodayTotal += td; pTodateTotal += tot;
+        const shortName = p.replace(/imported\s*/i,"").replace(/\s*\(AD\)/i,"").trim();
+        pulpRows += `<tr><td>${shortName}</td><td style="text-align:right">${td > 0 ? td.toFixed(3) : "—"}</td><td style="text-align:right">${tot.toFixed(3)}</td></tr>`;
+      }
+      pulpRows += `<tr style="font-weight:700;border-top:2px solid #cbd5e1"><td>Total</td><td style="text-align:right">${pTodayTotal.toFixed(3)}</td><td style="text-align:right">${pTodateTotal.toFixed(3)}</td></tr>`;
+
+      // Chemical-wise consumption: Today & Todate
+      const todateProdForChem = dailySummary.filter(d => inRange(d.date, f, t)).reduce((s,d) => s + d.total_prod_mt, 0);
+      const todayDailyForChem = dailySummary.find(d => d.date === today);
+      const todayProdForChem = todayDailyForChem ? todayDailyForChem.total_prod_mt : 0;
+      const cToday = new Map(), cTodate = new Map(), cDates = new Map();
+      if(cons.ok && cons.itemDaily){
+        for(const r of cons.itemDaily){
+          if(r.type !== "chemical") continue;
+          if(inRange(r.date, f, t)){
+            cTodate.set(r.item, (cTodate.get(r.item)||0) + r.qty);
+            if(r.qty > 0){
+              if(!cDates.has(r.item)) cDates.set(r.item, new Set());
+              cDates.get(r.item).add(r.date);
+            }
+          }
+          if(r.date === today) cToday.set(r.item, (cToday.get(r.item)||0) + r.qty);
+        }
+      }
+      // Build daily prod lookup for applicable production
+      const dailyProdMap = new Map();
+      for(const d of dailySummary){ if(inRange(d.date, f, t)) dailyProdMap.set(d.date, d.total_prod_mt); }
+
+      const chemKeys = [...new Set([...cTodate.keys()])].sort();
+      let chemRows = "";
+      let cTodayTotal = 0, cTodateTotal = 0, cAllApplProd = new Set();
+      for(const c of chemKeys){
+        const td = cToday.get(c)||0;
+        const tot = cTodate.get(c)||0;
+        if(tot <= 0) continue;
+        cTodayTotal += td; cTodateTotal += tot;
+        const ptTd = todayProdForChem > 0 && td > 0 ? (td / todayProdForChem).toFixed(2) : "—";
+        const ptTot = todateProdForChem > 0 ? (tot / todateProdForChem).toFixed(2) : "—";
+        // Actual Kg/Ton: consumption / production only on days chemical was used
+        const usedDates = cDates.get(c) || new Set();
+        let applProd = 0;
+        for(const dt of usedDates){ applProd += (dailyProdMap.get(dt)||0); cAllApplProd.add(dt); }
+        const ptActual = applProd > 0 ? (tot / applProd).toFixed(2) : "—";
+        chemRows += `<tr><td>${c}</td><td class="tc">${td > 0 ? td.toFixed(1) : "—"}</td><td class="tc">${tot.toFixed(1)}</td><td class="tc">${ptTd}</td><td class="tc">${ptTot}</td><td class="tc">${ptActual}</td></tr>`;
+      }
+      let totalApplProd = 0;
+      for(const dt of cAllApplProd){ totalApplProd += (dailyProdMap.get(dt)||0); }
+      chemRows += `<tr style="font-weight:800;border-top:2px solid #cbd5e1"><td>Total</td><td class="tc">${cTodayTotal.toFixed(1)}</td><td class="tc">${cTodateTotal.toFixed(1)}</td><td class="tc">${todayProdForChem > 0 ? (cTodayTotal / todayProdForChem).toFixed(2) : "—"}</td><td class="tc">${todateProdForChem > 0 ? (cTodateTotal / todateProdForChem).toFixed(2) : "—"}</td><td class="tc">${totalApplProd > 0 ? (cTodateTotal / totalApplProd).toFixed(2) : "—"}</td></tr>`;
+
+      // Utility: Today & Todate (only Steam, Gas TM/Boiler, Water, Power TM/Boiler)
+      let uSteamTd=0, uGasTMTd=0, uGasBoilerTd=0, uWaterTd=0, uPowerTMTd=0, uPowerBoilerTd=0;
+      let uSteamTot=0, uGasTMTot=0, uGasBoilerTot=0, uWaterTot=0, uPowerTMTot=0, uPowerBoilerTot=0;
+      if(cons.ok && cons.itemDaily){
+        for(const r of cons.itemDaily){
+          if(r.type !== "utility") continue;
+          const nm = r.item.toLowerCase();
+          const inR = inRange(r.date, f, t);
+          const isToday = r.date === today;
+          if(nm.includes("steam"))                              { if(inR) uSteamTot+=r.qty;      if(isToday) uSteamTd+=r.qty; }
+          else if(nm.includes("gas") && nm.includes("boiler"))  { if(inR) uGasBoilerTot+=r.qty;  if(isToday) uGasBoilerTd+=r.qty; }
+          else if(nm.includes("gas"))                           { if(inR) uGasTMTot+=r.qty;      if(isToday) uGasTMTd+=r.qty; }
+          else if(nm.includes("water"))                         { if(inR) uWaterTot+=r.qty;      if(isToday) uWaterTd+=r.qty; }
+          else if(nm.includes("power") && nm.includes("boiler")){ if(inR) uPowerBoilerTot+=r.qty; if(isToday) uPowerBoilerTd+=r.qty; }
+          else if(nm.includes("power"))                         { if(inR) uPowerTMTot+=r.qty;    if(isToday) uPowerTMTd+=r.qty; }
+        }
+      }
+
+      // Packing: Today & Todate (Core Pipe, Stretch Film, Label only)
+      const packFilter = ["core", "stretch", "label"];
+      const pkToday = new Map(), pkTodate = new Map(), pkUnit = new Map();
+      if(cons.ok && cons.itemDaily){
+        for(const r of cons.itemDaily){
+          if(r.type !== "packing") continue;
+          const nm = r.item.toLowerCase();
+          if(!packFilter.some(k => nm.includes(k))) continue;
+          if(inRange(r.date, f, t)){ pkTodate.set(r.item, (pkTodate.get(r.item)||0) + r.qty); pkUnit.set(r.item, r.unit||""); }
+          if(r.date === today) pkToday.set(r.item, (pkToday.get(r.item)||0) + r.qty);
+        }
+      }
+      let packRows = "";
+      for(const p of [...pkTodate.keys()].sort()){
+        const td = pkToday.get(p)||0;
+        const tot = pkTodate.get(p)||0;
+        if(tot <= 0) continue;
+        const unit = pkUnit.get(p)||"";
+        packRows += `<tr><td>${p}</td><td style="text-align:center;font-size:9px">${unit}</td><td class="tc">${td > 0 ? td.toFixed(1) : "—"}</td><td class="tc">${tot.toFixed(1)}</td></tr>`;
+      }
+
+      // Production today & todate
+      const todayDaily = dailySummary.find(d => d.date === today);
+      const todayProd = todayDaily ? todayDaily.total_prod_mt : 0;
+      const todayDown = todayDaily ? todayDaily.total_downtime_min : 0;
+      const todateProd = dailySummary.filter(d => inRange(d.date, f, t)).reduce((s,d) => s + d.total_prod_mt, 0);
+      const todateDown = dailySummary.filter(d => inRange(d.date, f, t)).reduce((s,d) => s + d.total_downtime_min, 0);
+
+      // Finished production today & todate from consumption sheet
+      let todayFinProd = 0, todateFinProd = 0;
+      if(cons.ok && cons.finProdDaily){
+        for(const r of cons.finProdDaily){
+          if(inRange(r.date, f, t)) todateFinProd += r.qty;
+          if(r.date === today) todayFinProd += r.qty;
+        }
+      }
+
+      const fmtN = (v, d=2) => v > 0 ? v.toFixed(d) : "—";
+      const perTon = (qty, prod) => prod > 0 && qty > 0 ? (qty / prod).toFixed(2) : "—";
+
+      // Per-ton consumption: Today & Todate
+      const ptPulpTd = perTon(pTodayTotal, todayProd);
+      const ptPulpTot = perTon(pTodateTotal, todateProd);
+      const ptChemTd = perTon(cTodayTotal, todayProd);
+      const ptChemTot = perTon(cTodateTotal, todateProd);
+      const ptSteamTd = perTon(uSteamTd, todayProd);
+      const ptSteamTot = perTon(uSteamTot, todateProd);
+      const ptWaterTd = perTon(uWaterTd, todayProd);
+      const ptWaterTot = perTon(uWaterTot, todateProd);
+      const ptPowerTd = perTon((uPowerTMTd + uPowerBoilerTd), todayProd);
+      const ptPowerTot = perTon((uPowerTMTot + uPowerBoilerTot), todateProd);
+
+      // SW per ton
+      let swTodayTotal = 0, swTodateTotal = 0;
+      for(const p of pulpKeys){
+        if(pulpTypeFromName(p) === "soft"){
+          swTodayTotal += (pToday.get(p)||0);
+          swTodateTotal += (pTodate.get(p)||0);
+        }
+      }
+      const ptSwTd = todayProd > 0 && swTodayTotal > 0 ? ((swTodayTotal / todayProd) * 100).toFixed(2) + " %" : "—";
+      const ptSwTot = todateProd > 0 && swTodateTotal > 0 ? ((swTodateTotal / todateProd) * 100).toFixed(2) + " %" : "—";
+
+      // Gas per ton (TM + Boiler)
+      const ptGasTd = perTon((uGasTMTd + uGasBoilerTd), todayProd);
+      const ptGasTot = perTon((uGasTMTot + uGasBoilerTot), todateProd);
+
+      // ===== Best (Lowest) daily per ton consumption with date =====
+      const _blPulpDay = new Map(), _blChemDay = new Map();
+      const _blSteamDay = new Map(), _blWaterDay = new Map(), _blPowerDay = new Map();
+      if(cons.ok){
+        for(const r of (cons.pulpDaily||[])){ if(inRange(r.date, f, t)) _blPulpDay.set(r.date, (_blPulpDay.get(r.date)||0) + r.qty); }
+        for(const r of (cons.chemDaily||[])){ if(inRange(r.date, f, t)) _blChemDay.set(r.date, (_blChemDay.get(r.date)||0) + r.qty); }
+        for(const r of (cons.itemDaily||[])){
+          if(r.type !== "utility" || !inRange(r.date, f, t)) continue;
+          const nm = r.item.toLowerCase();
+          if(nm.includes("steam"))      _blSteamDay.set(r.date, (_blSteamDay.get(r.date)||0) + r.qty);
+          else if(nm.includes("water")) _blWaterDay.set(r.date, (_blWaterDay.get(r.date)||0) + r.qty);
+          else if(nm.includes("power")) _blPowerDay.set(r.date, (_blPowerDay.get(r.date)||0) + r.qty);
+        }
+      }
+      function _findBestLowest(cMap){
+        let bv = Infinity, bd = "";
+        for(const [date, qty] of cMap){
+          const prod = dailyProdMap.get(date) || 0;
+          if(prod > 0 && qty > 0){
+            const pt = qty / prod;
+            if(pt < bv){ bv = pt; bd = date; }
+          }
+        }
+        return bv < Infinity ? { val: bv, date: bd } : null;
+      }
+      // SW daily totals (softwood only)
+      const _blSwDay = new Map();
+      if(cons.ok){
+        for(const r of (cons.itemDaily||[])){
+          if(r.type !== "pulp" || !inRange(r.date, f, t)) continue;
+          if(pulpTypeFromName(r.item) === "soft") _blSwDay.set(r.date, (_blSwDay.get(r.date)||0) + r.qty);
+        }
+      }
+      // Gas daily totals (TM + Boiler)
+      const _blGasDay = new Map();
+      if(cons.ok){
+        for(const r of (cons.itemDaily||[])){
+          if(r.type !== "utility" || !inRange(r.date, f, t)) continue;
+          const nm = r.item.toLowerCase();
+          if(nm.includes("gas")) _blGasDay.set(r.date, (_blGasDay.get(r.date)||0) + r.qty);
+        }
+      }
+      const bestPulpPt  = _findBestLowest(_blPulpDay);
+      const bestChemPt  = _findBestLowest(_blChemDay);
+      const bestSteamPt = _findBestLowest(_blSteamDay);
+      const bestWaterPt = _findBestLowest(_blWaterDay);
+      const bestPowerPt = _findBestLowest(_blPowerDay);
+      const bestSwPt    = _findBestLowest(_blSwDay);
+      const bestGasPt   = _findBestLowest(_blGasDay);
+      const fmtBest = (b, dec=2) => b ? `${b.val.toFixed(dec)} (${b.date})` : "—";
+      const fmtBestPct = (b) => b ? `${(b.val * 100).toFixed(2)}% (${b.date})` : "—";
+
+      const win = window.open("","_blank");
+      win.document.write(`<!DOCTYPE html><html><head><title>Daily Performance Summary</title>
+<style>
+  @page { size:A4 portrait; margin:8mm 7mm; }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ font-family:'Segoe UI',Arial,sans-serif; font-size:11px; color:#0f172a; font-weight:700; line-height:1.25; }
+  .hdr{ text-align:center; border-bottom:2px solid #1e3a5f; padding-bottom:4px; margin-bottom:5px; }
+  .hdr h1{ font-size:16px; color:#0f172a; font-weight:800; margin:0; }
+  .hdr p{ font-size:10px; color:#334155; font-weight:700; margin:2px 0 0; }
+  .grid{ display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .block{ border:1px solid #94a3b8; border-radius:4px; padding:3px 5px; }
+  .block h3{ font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; padding-bottom:1px; border-bottom:1.5px solid #cbd5e1; }
+  table{ width:100%; border-collapse:collapse; font-size:10px; }
+  th{ padding:1.5px 3px; font-size:9px; text-align:right; background:#f1f5f9; font-weight:900; color:#0f172a; }
+  th:first-child{ text-align:left; }
+  td{ padding:1.5px 3px; border-bottom:1px solid #e2e8f0; font-weight:700; color:#0f172a; }
+  td:first-child{ color:#334155; }
+  td:last-child{ text-align:right; font-weight:800; }
+  .tc{ text-align:right; font-weight:800; }
+  .bl1 h3{color:#ec4899} .bl2 h3{color:#3b82f6} .bl3 h3{color:#06b6d4}
+  .bl4 h3{color:#ef4444} .bl5 h3{color:#16a34a} .bl6 h3{color:#f59e0b}
+  .bl7 h3{color:#8b5cf6} .bl8 h3{color:#475569}
+  @media print { body{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+</style></head><body>
+
+<div class="hdr">
+  <h1>GSTPL — Daily Performance Summary Report</h1>
+  <p>Period: ${f} to ${t} &nbsp;|&nbsp; Today: ${today} &nbsp;|&nbsp; Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}</p>
+</div>
+
+<div class="grid">
+
+  <div class="block bl1"><h3>Machine Performance</h3>
+  <table>
+    <tr><td>OEE</td><td>${g("kpiOEE")}</td></tr>
+    <tr><td>Availability</td><td>${g("kpiAvail")}</td></tr>
+    <tr><td>Performance</td><td>${g("kpiPerf")}</td></tr>
+    <tr><td>Quality</td><td>${g("kpiQuality")}</td></tr>
+    <tr><td>Breakdown</td><td style="font-size:9px">${s("kpiOEESub")}</td></tr>
+  </table></div>
+
+  <div class="block bl2"><h3>Production (MT)</h3>
+  <table>
+    <tr><th></th><th>Today</th><th>Todate</th></tr>
+    <tr><td>Machine Prod</td><td class="tc">${fmtN(todayProd)}</td><td class="tc">${fmtN(todateProd)}</td></tr>
+    <tr><td>Finished Prod</td><td class="tc">${fmtN(todayFinProd)}</td><td class="tc">${fmtN(todateFinProd)}</td></tr>
+    <tr><td colspan="3" style="border-top:1px solid #e2e8f0;padding:0"></td></tr>
+    <tr><td>Avg/Day</td><td colspan="2" class="tc">${g("kpiAvgProd")} MT</td></tr>
+    <tr><td>Prod/Hour</td><td colspan="2" class="tc">${g("kpiProdHr")} MT</td></tr>
+    <tr><td>Capacity Eff</td><td colspan="2" class="tc">${g("kpiCapEff")}</td></tr>
+    <tr><td>Projected</td><td colspan="2" class="tc">${s("kpiProjProd")}</td></tr>
+    <tr><td>Expected</td><td colspan="2" class="tc">${s("kpiExpProd")}</td></tr>
+  </table></div>
+
+  <div class="block bl3"><h3>Machine</h3>
+  <table>
+    <tr><td>Avg Speed</td><td>${g("kpiSpeed")} m/min</td></tr>
+    <tr><td>Rated Speed</td><td>${s("kpiSpeedSub")}</td></tr>
+    <tr><td>Machine Health</td><td>${g("kpiHealth")}</td></tr>
+    <tr><td>Utilization</td><td>${g("kpiUtil")}</td></tr>
+    <tr><td>Average GSM</td><td>${g("kpiDailyAvg")}</td></tr>
+    <tr><td>Days</td><td>${s("kpiProdSub")}</td></tr>
+  </table></div>
+
+  <div class="block bl4"><h3>Loss Analysis</h3>
+  <table>
+    <tr><th></th><th>Today</th><th>Todate</th></tr>
+    <tr><td>Downtime</td><td class="tc">${todayDown > 0 ? todayDown.toFixed(0) + " min" : "—"}</td><td class="tc">${g("kpiDown")}</td></tr>
+    <tr><td colspan="3" style="border-top:1px solid #e2e8f0;padding:0"></td></tr>
+    <tr><td>Downtime/Day</td><td colspan="2" class="tc">${s("kpiDownDay")}</td></tr>
+    <tr><td>DT Loss MT</td><td colspan="2" class="tc">${g("kpiDownLoss")}</td></tr>
+    <tr><td>Speed Loss MT</td><td colspan="2" class="tc">${g("kpiSpeedLoss")}</td></tr>
+    <tr><td>Total Loss MT</td><td colspan="2" class="tc">${g("kpiTotalLoss")}</td></tr>
+    <tr><td>Loss %</td><td colspan="2" class="tc">${s("kpiLossPct")}</td></tr>
+  </table></div>
+
+  <div class="block bl7"><h3>Utility Consumption</h3>
+  <table>
+    <tr><th style="text-align:left">Item</th><th style="text-align:center">Unit</th><th>Today</th><th>Todate</th></tr>
+    <tr><td>Steam</td><td style="text-align:center;font-size:9px">MT</td><td class="tc">${uSteamTd > 0 ? uSteamTd.toFixed(1) : "—"}</td><td class="tc">${uSteamTot > 0 ? uSteamTot.toFixed(1) : "—"}</td></tr>
+    <tr><td>Gas (TM)</td><td style="text-align:center;font-size:9px">SCM</td><td class="tc">${uGasTMTd > 0 ? uGasTMTd.toFixed(1) : "—"}</td><td class="tc">${uGasTMTot > 0 ? uGasTMTot.toFixed(1) : "—"}</td></tr>
+    <tr><td>Gas (Boiler)</td><td style="text-align:center;font-size:9px">SCM</td><td class="tc">${uGasBoilerTd > 0 ? uGasBoilerTd.toFixed(1) : "—"}</td><td class="tc">${uGasBoilerTot > 0 ? uGasBoilerTot.toFixed(1) : "—"}</td></tr>
+    <tr><td>Water</td><td style="text-align:center;font-size:9px">m³</td><td class="tc">${uWaterTd > 0 ? uWaterTd.toFixed(1) : "—"}</td><td class="tc">${uWaterTot > 0 ? uWaterTot.toFixed(1) : "—"}</td></tr>
+    <tr><td>Power (Machine)</td><td style="text-align:center;font-size:9px">Units</td><td class="tc">${uPowerTMTd > 0 ? uPowerTMTd.toFixed(0) : "—"}</td><td class="tc">${uPowerTMTot > 0 ? uPowerTMTot.toFixed(0) : "—"}</td></tr>
+    <tr><td>Power (Boiler+ETP)</td><td style="text-align:center;font-size:9px">Units</td><td class="tc">${uPowerBoilerTd > 0 ? uPowerBoilerTd.toFixed(0) : "—"}</td><td class="tc">${uPowerBoilerTot > 0 ? uPowerBoilerTot.toFixed(0) : "—"}</td></tr>
+  </table></div>
+
+  <div class="block" style="border-color:#0ea5e9"><h3 style="color:#0ea5e9">Per Ton Consumption</h3>
+  <table>
+    <tr><th style="text-align:left">Item</th><th style="text-align:center;font-size:9px">Unit</th><th>Today</th><th>Todate</th><th style="color:#16a34a">Best (Lowest)</th></tr>
+    <tr><td>SW Consumption</td><td style="text-align:center;font-size:9px">%/MT</td><td class="tc">${ptSwTd}</td><td class="tc">${ptSwTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBestPct(bestSwPt)}</td></tr>
+    <tr><td>Chemical</td><td style="text-align:center;font-size:9px">Kg/MT</td><td class="tc">${ptChemTd}</td><td class="tc">${ptChemTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBest(bestChemPt)}</td></tr>
+    <tr><td>Steam</td><td style="text-align:center;font-size:9px">MT/MT</td><td class="tc">${ptSteamTd}</td><td class="tc">${ptSteamTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBest(bestSteamPt)}</td></tr>
+    <tr><td>Water</td><td style="text-align:center;font-size:9px">m³/MT</td><td class="tc">${ptWaterTd}</td><td class="tc">${ptWaterTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBest(bestWaterPt)}</td></tr>
+    <tr><td>Power</td><td style="text-align:center;font-size:9px">Units/MT</td><td class="tc">${ptPowerTd}</td><td class="tc">${ptPowerTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBest(bestPowerPt, 0)}</td></tr>
+    <tr><td>Gas</td><td style="text-align:center;font-size:9px">SCM/MT</td><td class="tc">${ptGasTd}</td><td class="tc">${ptGasTot}</td><td class="tc" style="color:#16a34a;font-size:9px">${fmtBest(bestGasPt)}</td></tr>
+  </table></div>
+
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 0.6fr 1.4fr;gap:4px;margin-top:4px;">
+
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <div class="block" style="border-color:#16a34a;flex:0 0 auto;"><h3 style="color:#16a34a">Pulp Consumption (MT)</h3>
+    <table>
+      <tr style="background:#f1f5f9"><th style="text-align:left">Grade</th><th>Today</th><th>Todate</th></tr>
+      ${pulpRows}
+      <tr style="background:#f0fdf4"><td>SW Pulp</td><td colspan="2" class="tc">${g("kpiSw")} MT</td></tr>
+      <tr style="background:#f0fdf4"><td>HW Pulp</td><td colspan="2" class="tc">${g("kpiHw")} MT</td></tr>
+      <tr style="background:#f0fdf4"><td>SW %</td><td colspan="2" class="tc">${g("kpiSwPct")}</td></tr>
+      <tr style="background:#f0fdf4"><td>Pulp/MT Prod</td><td colspan="2" class="tc">${s("kpiPulpPerMt")}</td></tr>
+    </table></div>
+
+    <div class="block" style="border-color:#78716c;flex:0 0 auto;"><h3 style="color:#78716c">Packing Material</h3>
+    <table>
+      <tr style="background:#f1f5f9"><th style="text-align:left">Item</th><th>Unit</th><th>Today</th><th>Todate</th></tr>
+      ${packRows || '<tr><td colspan="4">No data</td></tr>'}
+    </table></div>
+
+    <div class="block" style="border-color:#ec4899;flex:0 0 auto;"><h3 style="color:#ec4899">Best / Worst Day</h3>
+    <table>
+      <tr><td>Best Day</td><td>${s("kpiBestDay")}</td></tr>
+      <tr><td>Worst Day</td><td>${s("kpiWorstDay")}</td></tr>
+    </table></div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <div class="block bl8" style="flex:0 0 auto;"><h3>Top Downtime Depts (Min)</h3>
+    <table>
+      <tr><th style="text-align:left">Dept</th><th>Td</th><th>Tot</th></tr>
+      ${deptRows || '<tr><td colspan="3">No data</td></tr>'}
+    </table></div>
+
+    <div class="block" style="border-color:#3b82f6;flex:1 1 auto;"><h3 style="color:#3b82f6">Quality-wise Prod (MT)</h3>
+    <table style="font-size:9px">
+      <tr style="background:#f1f5f9"><th style="text-align:left;padding:1px 2px">Quality</th><th style="padding:1px 2px">Today</th><th style="padding:1px 2px">Todate</th></tr>
+      ${qualityRows}
+    </table></div>
+  </div>
+
+  <div class="block" style="border-color:#f59e0b"><h3 style="color:#f59e0b">Chemical (Kg)</h3>
+  <table>
+    <tr style="background:#f1f5f9"><th style="text-align:left">Chemical</th><th>Today</th><th>Todate</th><th>Kg/MT Td</th><th>Kg/MT Tot</th><th>Actual</th></tr>
+    ${chemRows}
+  </table></div>
+
+</div>
+
+</body></html>`);
+      win.document.close();
+      setTimeout(()=> win.print(), 400);
+    });
+
+    $("btnPdf").addEventListener("click", async ()=>{
+      const btn = $("btnPdf");
+      btn.disabled = true;
+      btn.textContent = "Generating…";
+
+      // Save current tab state
+      const allSections = document.querySelectorAll(".section");
+      const allTabs = document.querySelectorAll(".tab");
+      const savedActive = [];
+      allSections.forEach(s => savedActive.push(s.classList.contains("active")));
+
+      // Show all sections for capture
+      allSections.forEach(s => s.classList.add("active"));
+
+      // Hide upload controls and PDF button during capture
+      const hideEls = [document.querySelector(".upload"), document.querySelector(".bar"), btn];
+      hideEls.forEach(el => { if(el) el.setAttribute("data-prev-display", el.style.display || ""); el.style.display = "none"; });
+
+      // Build a report header
+      const reportHeader = document.createElement("div");
+      reportHeader.id = "pdfReportHeader";
+      reportHeader.style.cssText = "text-align:center;padding:18px 0 10px;border-bottom:2px solid #1e3a5f;margin-bottom:12px;";
+      const fromStr = $("dateFrom").value || "—";
+      const toStr = $("dateTo").value || "—";
+      reportHeader.innerHTML = `
+        <h1 style="margin:0;font-size:22px;color:#1e3a5f;">Daily Performance Report</h1>
+        <p style="margin:4px 0 0;font-size:14px;color:#475569;">Period: ${fromStr} to ${toStr} | Generated: ${new Date().toLocaleString()}</p>
+      `;
+      const wrap = document.querySelector(".wrap");
+      wrap.insertBefore(reportHeader, wrap.firstChild);
+
+      // Wait for charts to render
+      await new Promise(r => setTimeout(r, 500));
+
+      const opt = {
+        margin:       [8, 8, 8, 8],
+        filename:     `Daily_Performance_Report_${fromStr}_to_${toStr}.pdf`,
+        image:        { type:"jpeg", quality:0.95 },
+        html2canvas:  { scale:2, useCORS:true, scrollY:0, windowWidth:1200 },
+        jsPDF:        { unit:"mm", format:"a3", orientation:"portrait" },
+        pagebreak:    { mode:["avoid-all","css","legacy"] }
+      };
+
+      try {
+        await html2pdf().set(opt).from(wrap).save();
+      } catch(err) {
+        console.error("PDF generation error:", err);
+        alert("PDF generation failed: " + err.message);
+      }
+
+      // Restore
+      reportHeader.remove();
+      hideEls.forEach(el => { if(el) el.style.display = el.getAttribute("data-prev-display") || ""; });
+      allSections.forEach((s, i) => { if(!savedActive[i]) s.classList.remove("active"); });
+
+      btn.disabled = false;
+      btn.textContent = "PDF Report";
+    });
+
+    $("fileXlsx").addEventListener("change", async (e)=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+
+      const buf = await f.arrayBuffer();
+      const wb = XLSX.read(buf, {type:"array", cellDates:true});
+
+      const extracted = extractFromWorkbook(wb);
+      lineItems = extracted.allLine;
+      dailySummary = extracted.daily;
+      deptTotalsSorted = extracted.deptSorted;
+      minDate = extracted.mn;
+      maxDate = extracted.mx;
+      baseYear = extracted.by;
+      baseMonth = extracted.bm;
+      dailyAvgMap = extracted.h22Map || new Map();
+
+      cons = parsePulpChemicalConsumptionSheet(wb, baseYear || 2026, baseMonth || 1);
+
+      // Fill missing days from consumption sheet MACHINE PRODUCTION row
+      if(cons.ok && cons.machProdDaily){
+        const existDates=new Set(dailySummary.map(d=>d.date));
+        for(const mp of cons.machProdDaily){
+          if(!existDates.has(mp.date)){
+            dailySummary.push({date:mp.date, total_prod_mt:mp.qty, total_downtime_min:0});
+            existDates.add(mp.date);
+          }
+        }
+        dailySummary.sort((a,b)=>a.date.localeCompare(b.date));
+        // Update min/max dates
+        const allDates=dailySummary.map(d=>d.date).filter(Boolean).sort();
+        if(allDates.length){ minDate=allDates[0]; maxDate=allDates[allDates.length-1]; }
+      }
+
+      setTag(lineItems.length > 0);
+      updateDateInputs();
+      applyAll();
+      _saveToCache();
+    });
+
+    // ====== INDEXEDDB PERSISTENCE ======
+    const _DB_NAME='GSTPL_Dashboard', _DB_VER=1, _STORE='dashData';
+    function _openDB(){
+      return new Promise((resolve,reject)=>{
+        const req=indexedDB.open(_DB_NAME,_DB_VER);
+        req.onupgradeneeded=()=>{ req.result.createObjectStore(_STORE); };
+        req.onsuccess=()=>resolve(req.result);
+        req.onerror=()=>reject(req.error);
+      });
+    }
+    async function _saveToCache(){
+      try{
+        const db=await _openDB();
+        const data={
+          lineItems, dailySummary, deptTotalsSorted, minDate, maxDate, baseYear, baseMonth,
+          cons:{ok:cons.ok, pulpDaily:cons.pulpDaily||[], chemDaily:cons.chemDaily||[], itemDaily:cons.itemDaily||[], hwDaily:cons.hwDaily||[], swDaily:cons.swDaily||[], finProdDaily:cons.finProdDaily||[], machProdDaily:cons.machProdDaily||[]},
+          dailyAvgMap:[...dailyAvgMap.entries()],
+          savedAt:new Date().toISOString()
+        };
+        const tx=db.transaction(_STORE,'readwrite');
+        tx.objectStore(_STORE).put(data,'main');
+        await new Promise((r,j)=>{ tx.oncomplete=r; tx.onerror=j; });
+        db.close();
+        $("btnClearCache").style.display='inline-block';
+        console.log("Dashboard data saved to cache.");
+      }catch(e){ console.warn("Cache save failed:",e); }
+    }
+    async function _loadFromCache(){
+      try{
+        const db=await _openDB();
+        const tx=db.transaction(_STORE,'readonly');
+        const req=tx.objectStore(_STORE).get('main');
+        const data=await new Promise((r,j)=>{ req.onsuccess=()=>r(req.result); req.onerror=j; });
+        db.close();
+        if(!data||!data.lineItems||!data.lineItems.length) return false;
+        lineItems=data.lineItems;
+        dailySummary=data.dailySummary||[];
+        deptTotalsSorted=data.deptTotalsSorted||[];
+        minDate=data.minDate; maxDate=data.maxDate;
+        baseYear=data.baseYear; baseMonth=data.baseMonth;
+        if(data.cons){ cons=data.cons; cons.ok=!!cons.ok; }
+        dailyAvgMap=new Map(data.dailyAvgMap||[]);
+        setTag(true);
+        updateDateInputs();
+        applyAll();
+        $("btnClearCache").style.display='inline-block';
+        console.log("Dashboard data restored from cache (saved: "+data.savedAt+")");
+        return true;
+      }catch(e){ console.warn("Cache load failed:",e); return false; }
+    }
+    async function _clearCache(){
+      try{
+        const db=await _openDB();
+        const tx=db.transaction(_STORE,'readwrite');
+        tx.objectStore(_STORE).delete('main');
+        await new Promise((r,j)=>{ tx.oncomplete=r; tx.onerror=j; });
+        db.close();
+        $("btnClearCache").style.display='none';
+        alert("Saved data cleared. Reload the page to start fresh.");
+      }catch(e){ console.warn("Cache clear failed:",e); }
+    }
+    $("btnClearCache").addEventListener("click",()=>{
+      if(confirm("Clear all saved dashboard data? You will need to re-upload Excel files.")) _clearCache();
+    });
+
+    // Auto-load on page open
+    _loadFromCache();
+  </script>
+</body>
+</html>
